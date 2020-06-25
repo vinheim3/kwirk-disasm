@@ -1,3 +1,6 @@
+## Building
+* Just wla-gb I think
+
 ## Level loading
 Code for loading levels is in code/levelLoading.s.
 Data for levels is in data/roomData.s, and split into 3 lookup tables
