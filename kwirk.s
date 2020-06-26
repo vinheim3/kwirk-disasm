@@ -132,7 +132,7 @@ func_018d:
 	ldh		(R_SC), a		; $01a3: $e0 $02
 	ld		(wcf3c), a		; $01a5: $ea $3c $cf
 	ld		(wcf39), a		; $01a8: $ea $39 $cf
-	ld		(wIsScrollingLevel), a		; $01ab: $ea $b8 $c2
+	ld		(wGameMode), a		; $01ab: $ea $b8 $c2
 	ld		($c378), a		; $01ae: $ea $78 $c3
 	ld		($c379), a		; $01b1: $ea $79 $c3
 	ld		(wcf01), a		; $01b4: $ea $01 $cf
@@ -289,11 +289,11 @@ copyMemoryBc_0BeforeEachByte:
 
 initTitleScreen:
 	xor		a			; $02bc: $af
-	ld		(wcf43), a		; $02bd: $ea $43 $cf
+	ld		(wIsDemoScenes), a		; $02bd: $ea $43 $cf
 	ld		($c2ed), a		; $02c0: $ea $ed $c2
 	ld		(wcf48), a		; $02c3: $ea $48 $cf
 	ld		a, $0a			; $02c6: $3e $0a
-	ld		(wc2b9), a		; $02c8: $ea $b9 $c2
+	ld		(wNumberOfRandomRoomsForDifficulty), a		; $02c8: $ea $b9 $c2
 	ld		(wc2ba), a		; $02cb: $ea $ba $c2
 	ld		b, MUS_TITLESCREEN			; $02ce: $06 $05
 	rst_playSound
@@ -362,7 +362,7 @@ initTitleScreen:
 	cp		$17			; $034c: $fe $17
 	jp		z, loadDemoScenes		; $034e: $ca $1e $70
 func_0351:
-	ld		a, (wcf43)		; $0351: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $0351: $fa $43 $cf
 	and		a			; $0354: $a7
 	jp		nz, initTitleScreen		; $0355: $c2 $bc $02
 	ld		a, (wcf42)		; $0358: $fa $42 $cf
@@ -387,8 +387,8 @@ clearScreenAndBGMap:
 	ret
 
 func_0382:
-	ld		a, $02			; $0382: $3e $02
-	ld		(wIsScrollingLevel), a		; $0384: $ea $b8 $c2
+	ld		a, GAMEMODE_VS_MODE			; $0382: $3e $02
+	ld		(wGameMode), a		; $0384: $ea $b8 $c2
 initGameLoadSelectGameScreen:
 	call		clear1st100bytesOfWram
 	call		clearScreenAndBGMap
@@ -436,8 +436,8 @@ func_03bf:
 	ret					; $03d3: $c9
 
 func_03d4:
-	ld		a, $02			; $03d4: $3e $02
-	ld		(wIsScrollingLevel), a		; $03d6: $ea $b8 $c2
+	ld		a, GAMEMODE_VS_MODE			; $03d4: $3e $02
+	ld		(wGameMode), a		; $03d6: $ea $b8 $c2
 	jp		difficultyOptionsScreen			; $03d9: $c3 $bc $04
 
 func_03dc:
@@ -463,7 +463,7 @@ gotoGameSelectMenu:
 	ld		b, MUS_LEVEL_SELECT_MENU			; $03fe: $06 $03
 	rst_playSound
 	ld		a, (wc37d)		; $0401: $fa $7d $c3
-	ld		(wc2b9), a		; $0404: $ea $b9 $c2
+	ld		(wNumberOfRandomRoomsForDifficulty), a		; $0404: $ea $b9 $c2
 	ld		a, (wc37e)		; $0407: $fa $7e $c3
 	ld		(wc2ba), a		; $040a: $ea $ba $c2
 
@@ -515,8 +515,8 @@ gameSelectMenu:
 	cp		$ff			; $0469: $fe $ff
 	jr		z, -			; $046b: $28 $ab
 
-	ld		(wIsScrollingLevel), a		; $046d: $ea $b8 $c2
-	cp		$02			; $0470: $fe $02
+	ld		(wGameMode), a		; $046d: $ea $b8 $c2
+	cp		GAMEMODE_VS_MODE			; $0470: $fe $02
 	jr		nz, gotoDifficultyOptionsScreen			; $0472: $20 $37
 	ld		hl, SC		; $0474: $21 $02 $ff
 	res		7, (hl)			; $0477: $cb $be
@@ -577,10 +577,11 @@ difficultyOptionsScreen:
 	cp		$ff			; $04f2: $fe $ff
 	jp		z, func_03dc		; $04f4: $ca $dc $03
 	ld		(wDifficulty), a		; $04f7: $ea $c0 $c2
-	ld		a, (wIsScrollingLevel)		; $04fa: $fa $b8 $c2
-	cp		$00			; $04fd: $fe $00
+	ld		a, (wGameMode)		; $04fa: $fa $b8 $c2
+	cp		GAMEMODE_GOING_UP			; $04fd: $fe $00
 	jp		z, floorOptionsScreen		; $04ff: $ca $05 $05
 	jp		func_059a			; $0502: $c3 $9a $05
+
 
 floorOptionsScreen:
 	call		func_03bf			; $0505: $cd $bf $03
@@ -591,6 +592,7 @@ floorOptionsScreen:
 	ld		hl, $9903		; $0513: $21 $03 $99
 	call		loadLevelSelectTiles_andLayoutData			; $0516: $cd $ce $06
 
+	; cursor details
 	ld		hl, $9943		; $0519: $21 $43 $99
 	ld		de, $0720		; $051c: $11 $20 $07
 	ld		b, $01			; $051f: $06 $01
@@ -614,14 +616,17 @@ floorOptionsScreen:
 
 displayViewOptionsScreen:
 	call		func_03bf			; $0543: $cd $bf $03
-	ld		a, (wc2b9)		; $0546: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $0546: $fa $b9 $c2
 	ld		(wc37d), a		; $0549: $ea $7d $c3
 	ld		a, (wc2ba)		; $054c: $fa $ba $c2
 	ld		(wc37e), a		; $054f: $ea $7e $c3
 	call		doALoop6000Times			; $0552: $cd $d9 $06
+
 	ld		de, displayViewOptionsLayoutData		; $0555: $11 $73 $07
 	ld		hl, $9902		; $0558: $21 $02 $99
 	call		loadLevelSelectTiles_andLayoutData			; $055b: $cd $ce $06
+
+	; cursor details
 	ld		hl, $9942		; $055e: $21 $42 $99
 	ld		de, $0040		; $0561: $11 $40 $00
 	ld		b, $00			; $0564: $06 $00
@@ -630,24 +635,28 @@ displayViewOptionsScreen:
 	ld		($cf13), a		; $056a: $ea $13 $cf
 	ld		a, $ab			; $056d: $3e $ab
 	call		loadCursorData			; $056f: $cd $9b $2c
+
 	xor		a			; $0572: $af
 	ld		(wcf3a), a		; $0573: $ea $3a $cf
-	ld		($c2be), a		; $0576: $ea $be $c2
+	ld		(wIsDiagonalView), a		; $0576: $ea $be $c2
+
 	ld		a, (wMenuOptionSelected)		; $0579: $fa $19 $cf
 	cp		$ff			; $057c: $fe $ff
-	jp		z, func_058c		; $057e: $ca $8c $05
+	jp		z, @pressedBack		; $057e: $ca $8c $05
 	and		a			; $0581: $a7
 	jp		nz, func_05ef		; $0582: $c2 $ef $05
 	inc		a			; $0585: $3c
-	ld		($c2be), a		; $0586: $ea $be $c2
+	ld		(wIsDiagonalView), a		; $0586: $ea $be $c2
 	jp		func_05ef			; $0589: $c3 $ef $05
-func_058c:
-	ld		a, (wIsScrollingLevel)		; $058c: $fa $b8 $c2
+
+@pressedBack:
+	ld		a, (wGameMode)		; $058c: $fa $b8 $c2
 	and		a			; $058f: $a7
 	jp		z, floorOptionsScreen		; $0590: $ca $05 $05
 	cp		$01			; $0593: $fe $01
 	jr		z, func_059a			; $0595: $28 $03
 	jp		contestOptionsScreen			; $0597: $c3 $b4 $05
+
 func_059a:
 	call		func_03bf			; $059a: $cd $bf $03
 	xor		a			; $059d: $af
@@ -656,8 +665,8 @@ func_059a:
 	ld		a, (wMenuOptionSelected)		; $05a4: $fa $19 $cf
 	cp		$ff			; $05a7: $fe $ff
 	jp		z, difficultyOptionsScreen		; $05a9: $ca $bc $04
-	ld		a, (wIsScrollingLevel)		; $05ac: $fa $b8 $c2
-	cp		$01			; $05af: $fe $01
+	ld		a, (wGameMode)		; $05ac: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $05af: $fe $01
 	jp		z, displayViewOptionsScreen		; $05b1: $ca $43 $05
 
 contestOptionsScreen:
@@ -690,13 +699,13 @@ func_05ef:
 	xor		a			; $05ef: $af
 	ld		(wcf3a), a		; $05f0: $ea $3a $cf
 	ld		($cf45), a		; $05f3: $ea $45 $cf
-	ld		a, (wIsScrollingLevel)		; $05f6: $fa $b8 $c2
-	cp		$01			; $05f9: $fe $01
+	ld		a, (wGameMode)		; $05f6: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $05f9: $fe $01
 	jr		nz, func_0606			; $05fb: $20 $09
 	ldh		a, (<hKeysPressed)		; $05fd: $f0 $8b
 	and		BTN_SELECT|BTN_LEFT			; $05ff: $e6 $24
 	cp		BTN_SELECT|BTN_LEFT			; $0601: $fe $24
-	call		z, func_3ea9		; $0603: $cc $a9 $3e
+	call		z, populateListOfRandomLevelsBasedOnDifficulty		; $0603: $cc $a9 $3e
 func_0606:
 	xor		a			; $0606: $af
 	ld		(wcf42), a		; $0607: $ea $42 $cf
@@ -722,7 +731,7 @@ func_0606:
 	ld		bc, $0190		; $0634: $01 $90 $01
 	ld		a, $00			; $0637: $3e $00
 	call		setA_bcTimesToHl			; $0639: $cd $27 $2c
-	ld		a, (wIsScrollingLevel)		; $063c: $fa $b8 $c2
+	ld		a, (wGameMode)		; $063c: $fa $b8 $c2
 	and		a			; $063f: $a7
 	jr		z, func_066e			; $0640: $28 $2c
 	ld		a, ($cf45)		; $0642: $fa $45 $cf
@@ -730,50 +739,54 @@ func_0606:
 	jr		nz, func_066e			; $0646: $20 $26
 	ld		a, ($c2ec)		; $0648: $fa $ec $c2
 	ld		(wc377), a		; $064b: $ea $77 $c3
-	ld		a, (wIsScrollingLevel)		; $064e: $fa $b8 $c2
-	cp		$02			; $0651: $fe $02
+	ld		a, (wGameMode)		; $064e: $fa $b8 $c2
+	cp		GAMEMODE_VS_MODE			; $0651: $fe $02
 	call		z, func_0390		; $0653: $cc $90 $03
-	ld		a, (wIsScrollingLevel)		; $0656: $fa $b8 $c2
-	cp		$01			; $0659: $fe $01
+	ld		a, (wGameMode)		; $0656: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $0659: $fe $01
 	jr		nz, +			; $065b: $20 $03
 	ld		(wcf3c), a		; $065d: $ea $3c $cf
 +
-	call		setFFtoC311toC32e			; $0660: $cd $e6 $06
+	call		setFFtoAllListOfRandomRooms			; $0660: $cd $e6 $06
 	ld		a, $ff			; $0663: $3e $ff
-	ld		($c374), a		; $0665: $ea $74 $c3
+	ld		(wCurrentLevelIdxInListOfRandomLevels), a		; $0665: $ea $74 $c3
 	call		func_31e7			; $0668: $cd $e7 $31
-	call		func_0674			; $066b: $cd $74 $06
+	call		getNextRoomIndexForScrollingLevel			; $066b: $cd $74 $06
 func_066e:
 	call		func_1aff			; $066e: $cd $ff $1a
 	jp		loadLevelNormally			; $0671: $c3 $dd $01
 
 
-func_0674:
-	ld		a, (wcf43)		; $0674: $fa $43 $cf
-	and		a			; $0677: $a7
-	jr		nz, func_0689			; $0678: $20 $0f
-	call		func_06f2			; $067a: $cd $f2 $06
-func_067d:
-	call		func_3ec9			; $067d: $cd $c9 $3e
-	ld		b, a			; $0680: $47
-	ld		a, (wRoomIndex)		; $0681: $fa $bf $c2
-	add		b			; $0684: $80
-	ld		(wRoomIndex), a		; $0685: $ea $bf $c2
-	ret					; $0688: $c9
-func_0689:
-	ld		hl, data_70c3		; $0689: $21 $c3 $70
-	ld		a, ($cede)		; $068c: $fa $de $ce
-	call		addAToHl			; $068f: $cd $6b $24
-	ld		a, (hl)			; $0692: $7e
-	ld		(wRoomIndex), a		; $0693: $ea $bf $c2
-	xor		a			; $0696: $af
-	ld		(wDifficulty), a		; $0697: $ea $c0 $c2
-	ld		a, ($cede)		; $069a: $fa $de $ce
-	inc		a			; $069d: $3c
-	ld		($cede), a		; $069e: $ea $de $ce
-	xor		a			; $06a1: $af
-	ld		(wc2fa), a		; $06a2: $ea $fa $c2
-	jr		func_067d			; $06a5: $18 $d6
+getNextRoomIndexForScrollingLevel:
+	ld		a, (wIsDemoScenes)
+	and		a
+	jr		nz, @getDemoSceneRooms
+
+	; call for non-demo scrolling rooms
+	call		getNextRoomIndexListOfRandomLevels
+	
+@getRandomRoomsTableIdxFromRoomIndex:
+	call		getScrollingLevel1stRoomIdxAndRangeOfRoomsBasedOnDifficulty
+	ld		b, a
+	ld		a, (wRoomIndex)
+	add		b
+	ld		(wRoomIndex), a
+	ret
+	
+@getDemoSceneRooms:
+	ld		hl, demoSceneRooms
+	ld		a, (wCurrentDemoSceneRoomIdx)
+	call		addAToHl
+	ld		a, (hl)
+	ld		(wRoomIndex), a
+	xor		a
+	ld		(wDifficulty), a
+	ld		a, (wCurrentDemoSceneRoomIdx)
+	inc		a
+	ld		(wCurrentDemoSceneRoomIdx), a
+	xor		a
+	ld		(wRandomRoomIsFlippedVertically), a
+	jr		@getRandomRoomsTableIdxFromRoomIndex
 	
 loadLevelSelectTiles:
 	call		blankScreenDuringVBlankPeriod
@@ -817,29 +830,30 @@ doALoop6000Times:
 	pop		bc
 	ret
 
-setFFtoC311toC32e:
-	ld		hl, $c311		; $06e6: $21 $11 $c3
-	ld		bc, $001e		; $06e9: $01 $1e $00
-	ld		a, $ff			; $06ec: $3e $ff
-	call		setA_bcTimesToHl			; $06ee: $cd $27 $2c
-	ret					; $06f1: $c9
+setFFtoAllListOfRandomRooms:
+	ld		hl, wListOfRandomLevels
+	ld		bc, 30
+	ld		a, $ff
+	call		setA_bcTimesToHl
+	ret
 
-func_06f2:
-	ld		a, ($c374)		; $06f2: $fa $74 $c3
-	inc		a			; $06f5: $3c
-	ld		($c374), a		; $06f6: $ea $74 $c3
-	ld		e, a			; $06f9: $5f
-	ld		d, $00			; $06fa: $16 $00
-	ld		hl, $c311		; $06fc: $21 $11 $c3
-	add		hl, de			; $06ff: $19
-	ld		a, (hl)			; $0700: $7e
-	ld		(wRoomIndex), a		; $0701: $ea $bf $c2
-	xor		a			; $0704: $af
-	ld		(wc2fa), a		; $0705: $ea $fa $c2
-	call		func_3254			; $0708: $cd $54 $32
-	and		$01			; $070b: $e6 $01
-	ld		(wc2fa), a		; $070d: $ea $fa $c2
-	ret					; $0710: $c9
+getNextRoomIndexListOfRandomLevels:
+	ld		a, (wCurrentLevelIdxInListOfRandomLevels)
+	inc		a
+	ld		(wCurrentLevelIdxInListOfRandomLevels), a
+
+	ld		e, a
+	ld		d, $00
+	ld		hl, wListOfRandomLevels
+	add		hl, de
+	ld		a, (hl)
+	ld		(wRoomIndex), a
+	xor		a
+	ld		(wRandomRoomIsFlippedVertically), a
+	call		getNextRandomNumber
+	and		$01
+	ld		(wRandomRoomIsFlippedVertically), a
+	ret
 
 levelSetCleared:
 	call		drawLevelClearScreen
@@ -874,25 +888,25 @@ func_0eb6:
 	call		func_7000			; $0eb9: $cd $00 $70
 	xor		a			; $0ebc: $af
 	ld		($cf47), a		; $0ebd: $ea $47 $cf
-	ld		a, (wIsScrollingLevel)		; $0ec0: $fa $b8 $c2
+	ld		a, (wGameMode)		; $0ec0: $fa $b8 $c2
 	and		a			; $0ec3: $a7
 	jr		z, +			; $0ec4: $28 $24
 	ld		a, $f0			; $0ec6: $3e $f0
 	ld		($c1b3), a		; $0ec8: $ea $b3 $c1
-	ld		a, (wc2b9)		; $0ecb: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $0ecb: $fa $b9 $c2
 	call		get2DigitsToDrawFromNonBCD_A			; $0ece: $cd $12 $21
 	ld		hl, $9a03		; $0ed1: $21 $03 $9a
 	call		draw2DigitsAtHl			; $0ed4: $cd $5d $20
-	ld		a, (wIsScrollingLevel)		; $0ed7: $fa $b8 $c2
-	cp		$02			; $0eda: $fe $02
+	ld		a, (wGameMode)		; $0ed7: $fa $b8 $c2
+	cp		GAMEMODE_VS_MODE			; $0eda: $fe $02
 	jr		nz, +			; $0edc: $20 $0c
 	ld		a, (wc2ba)		; $0ede: $fa $ba $c2
 	call		get2DigitsToDrawFromNonBCD_A			; $0ee1: $cd $12 $21
 	ld		hl, $9823		; $0ee4: $21 $23 $98
 	call		draw2DigitsAtHl			; $0ee7: $cd $5d $20
 +
-	ld		a, (wIsScrollingLevel)		; $0eea: $fa $b8 $c2
-	cp		$02			; $0eed: $fe $02
+	ld		a, (wGameMode)		; $0eea: $fa $b8 $c2
+	cp		GAMEMODE_VS_MODE			; $0eed: $fe $02
 	jr		nz, ++			; $0eef: $20 $17
 	ld		a, (wcf3c)		; $0ef1: $fa $3c $cf
 	and		a			; $0ef4: $a7
@@ -908,7 +922,7 @@ func_0eb6:
 ++
 	call		func_15f7			; $0f08: $cd $f7 $15
 	call		func_1445			; $0f0b: $cd $45 $14
-	ld		a, (wIsScrollingLevel)		; $0f0e: $fa $b8 $c2
+	ld		a, (wGameMode)		; $0f0e: $fa $b8 $c2
 	and		a			; $0f11: $a7
 	jr		nz, func_0f19			; $0f12: $20 $05
 	ld		b, SND_01			; $0f14: $06 $01
@@ -935,16 +949,16 @@ func_0f38:
 func_0f3b:
 	xor		a			; $0f3b: $af
 	ld		($ceff), a		; $0f3c: $ea $ff $ce
-	ld		a, (wIsScrollingLevel)		; $0f3f: $fa $b8 $c2
+	ld		a, (wGameMode)		; $0f3f: $fa $b8 $c2
 	and		a			; $0f42: $a7
 	jr		z, ++			; $0f43: $28 $14
-	cp		$02			; $0f45: $fe $02
+	cp		GAMEMODE_VS_MODE			; $0f45: $fe $02
 	jr		nz, +			; $0f47: $20 $00
 +
 	ld		hl, $9a0e		; $0f49: $21 $0e $9a
 	call		func_207d			; $0f4c: $cd $7d $20
-	ld		a, (wIsScrollingLevel)		; $0f4f: $fa $b8 $c2
-	cp		$01			; $0f52: $fe $01
+	ld		a, (wGameMode)		; $0f4f: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $0f52: $fe $01
 	jr		nz, ++			; $0f54: $20 $03
 	call		func_3162			; $0f56: $cd $62 $31
 ++
@@ -954,11 +968,11 @@ func_0f3b:
 	ld		a, ($cf34)		; $0f60: $fa $34 $cf
 	and		a			; $0f63: $a7
 	jr		nz, func_0f9c			; $0f64: $20 $36
-	ld		a, (wcf43)		; $0f66: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $0f66: $fa $43 $cf
 	and		a			; $0f69: $a7
 	jr		nz, func_0f7d			; $0f6a: $20 $11
 	call		pollInput			; $0f6c: $cd $45 $2b
-	ld		a, (wIsScrollingLevel)		; $0f6f: $fa $b8 $c2
+	ld		a, (wGameMode)		; $0f6f: $fa $b8 $c2
 	and		a			; $0f72: $a7
 	jr		nz, @scrollingLevelProcessAInput			; $0f73: $20 $05
 	call		checkAorSelectPressedInGame			; $0f75: $cd $89 $10
@@ -966,7 +980,7 @@ func_0f3b:
 @scrollingLevelProcessAInput:
 	call		func_10ae			; $0f7a: $cd $ae $10
 func_0f7d:
-	call		func_10e5			; $0f7d: $cd $e5 $10
+	call		handleInGameMovement			; $0f7d: $cd $e5 $10
 	ld		a, ($c2d2)		; $0f80: $fa $d2 $c2
 	and		a			; $0f83: $a7
 	jr		z, func_0fa6			; $0f84: $28 $20
@@ -989,7 +1003,7 @@ func_0fa6:
 	ld		a, ($cf34)		; $0fa9: $fa $34 $cf
 	and		a			; $0fac: $a7
 	jr		nz, func_0fcb			; $0fad: $20 $1c
-	ld		a, (wIsScrollingLevel)		; $0faf: $fa $b8 $c2
+	ld		a, (wGameMode)		; $0faf: $fa $b8 $c2
 	and		a			; $0fb2: $a7
 	jr		z, func_0fba			; $0fb3: $28 $05
 	call		func_168f			; $0fb5: $cd $8f $16
@@ -1069,7 +1083,7 @@ vblankInterrupt:
 	ld		a, (wcf48)		; $103a: $fa $48 $cf
 	and		a			; $103d: $a7
 	jp		nz, func_3521		; $103e: $c2 $21 $35
-	ld		a, (wcf43)		; $1041: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $1041: $fa $43 $cf
 	and		a			; $1044: $a7
 	jr		z, +			; $1045: $28 $0c
 	ld		(wcf3a), a		; $1047: $ea $3a $cf
@@ -1129,7 +1143,7 @@ checkAorSelectPressedInGame:
 
 ; is only purpose to process when A is pressed in scrolling level
 func_10ae:
-	ld		a, (wcf43)		; $10ae: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $10ae: $fa $43 $cf
 	and		a			; $10b1: $a7
 	ret		nz			; $10b2: $c0
 	ldh		a, (<hKeysPressed)		; $10b3: $f0 $8b
@@ -1156,17 +1170,19 @@ func_10ae:
 justRet:
 	ret					; $10e4: $c9
 
-; movement in-game?
-func_10e5:
-	ld		a, (wcf43)		; $10e5: $fa $43 $cf
-	and		a			; $10e8: $a7
-	jp		nz, func_7069		; $10e9: $c2 $69 $70
-	call		waitUntilVBlankHandled_andXorCf39			; $10ec: $cd $d2 $0f
-	call		pollInput			; $10ef: $cd $45 $2b
-	push		bc			; $10f2: $c5
-	call		justRet			; $10f3: $cd $e4 $10
-	pop		bc			; $10f6: $c1
-func_10f7:
+
+handleInGameMovement:
+	ld		a, (wIsDemoScenes)
+	and		a
+	jp		nz, getKeyPressedForDemoScenes
+	
+	call		waitUntilVBlankHandled_andXorCf39
+	call		pollInput
+	push		bc
+	call		justRet
+	pop		bc
+	
+_handleMovementFromKeysPressed:
 	ldh		a, (<hKeysPressed)		; $10f7: $f0 $8b
 	and		BTN_RIGHT|BTN_LEFT|BTN_UP|BTN_DOWN			; $10f9: $e6 $f0
 	jr		nz, +			; $10fb: $20 $04
@@ -1219,7 +1235,7 @@ func_1149:
 	add		a			; $1158: $87
 	add		a			; $1159: $87
 	call		addAToHl			; $115a: $cd $6b $24
-	ld		a, ($c2be)		; $115d: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $115d: $fa $be $c2
 	and		a			; $1160: $a7
 	jr		nz, func_1164			; $1161: $20 $01
 	ret					; $1163: $c9
@@ -1229,7 +1245,7 @@ func_1164:
 	jr		z, func_11aa			; $1168: $28 $40
 	dec		a			; $116a: $3d
 	call		addAToHl			; $116b: $cd $6b $24
-	ld		a, ($c2be)		; $116e: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $116e: $fa $be $c2
 	and		a			; $1171: $a7
 	jr		z, func_119e			; $1172: $28 $2a
 	push		hl			; $1174: $e5
@@ -1319,7 +1335,7 @@ func_11ce:
 	jp		z, func_1247		; $11fa: $ca $47 $12
 	cp		$03			; $11fd: $fe $03
 	jr		z, +			; $11ff: $28 $0e
-	ld		a, (wIsScrollingLevel)		; $1201: $fa $b8 $c2
+	ld		a, (wGameMode)		; $1201: $fa $b8 $c2
 	and		a			; $1204: $a7
 	jr		nz, +			; $1205: $20 $08
 	call		func_1f8d			; $1207: $cd $8d $1f
@@ -1337,7 +1353,7 @@ func_121d:
 	ld		a, $01			; $121d: $3e $01
 	ld		($cf47), a		; $121f: $ea $47 $cf
 func_1222:
-	ld		a, (wcf43)		; $1222: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $1222: $fa $43 $cf
 	and		a			; $1225: $a7
 	jr		nz, func_123e			; $1226: $20 $16
 	ld		a, ($cf35)		; $1228: $fa $35 $cf
@@ -1360,7 +1376,7 @@ func_123e:
 	ld		($cf31), a		; $1243: $ea $31 $cf
 	ret					; $1246: $c9
 func_1247:
-	ld		a, (wcf43)		; $1247: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $1247: $fa $43 $cf
 	and		a			; $124a: $a7
 	jr		nz, func_1250			; $124b: $20 $03
 	ld		b, SND_09			; $124d: $06 $09
@@ -1425,7 +1441,7 @@ func_1274:
 	ld		e, a			; $12ba: $5f
 	ld		a, ($c2d1)		; $12bb: $fa $d1 $c2
 	call		store_c_b_d_e_in_c000plus4a			; $12be: $cd $f1 $24
-	ld		a, ($c2be)		; $12c1: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $12c1: $fa $be $c2
 	and		a			; $12c4: $a7
 	jr		z, +			; $12c5: $28 $10
 	ld		b, $00			; $12c7: $06 $00
@@ -1555,7 +1571,7 @@ func_13a3:
 	ldh		(R_OBP1), a		; $13a3: $e0 $49
 	ld		a, $08			; $13a5: $3e $08
 	ld		($c2e6), a		; $13a7: $ea $e6 $c2
-	ld		a, ($c2be)		; $13aa: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $13aa: $fa $be $c2
 	and		a			; $13ad: $a7
 	jr		z, func_13f1			; $13ae: $28 $41
 	ld		hl, $0088		; $13b0: $21 $88 $00
@@ -1672,7 +1688,7 @@ func_144a:
 	ld		($cf1a), a		; $144c: $ea $1a $cf
 	push		af			; $144f: $f5
 	push		hl			; $1450: $e5
-	ld		a, ($c2be)		; $1451: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $1451: $fa $be $c2
 	and		a			; $1454: $a7
 	jr		nz, func_1461			; $1455: $20 $0a
 	ld		hl, data_3f38		; $1457: $21 $38 $3f
@@ -1699,7 +1715,7 @@ func_146a:
 	ld		e, $00			; $1475: $1e $00
 	pop		af			; $1477: $f1
 	call		store_c_b_d_e_in_c000plus4a			; $1478: $cd $f1 $24
-	ld		a, ($c2be)		; $147b: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $147b: $fa $be $c2
 	and		a			; $147e: $a7
 	jr		z, +			; $147f: $28 $0f
 	ld		de, $7d80		; $1481: $11 $80 $7d
@@ -1838,7 +1854,7 @@ returnToGameScreen:
 	call		loadLevelSelectTiles_andLayoutData			; $1580: $cd $ce $06
 
 	ld		de, selectFloorLayoutData		; $1583: $11 $e2 $08
-	ld		a, (wIsScrollingLevel)		; $1586: $fa $b8 $c2
+	ld		a, (wGameMode)		; $1586: $fa $b8 $c2
 	and		a			; $1589: $a7
 	jr		z, +			; $158a: $28 $03
 	ld		de, selectCourseLayoutData		; $158c: $11 $ef $08
@@ -1889,7 +1905,7 @@ func_15cf:
 func_15e8:
 	jp		difficultyOptionsScreen			; $15e8: $c3 $bc $04
 func_15eb:
-	ld		a, (wIsScrollingLevel)		; $15eb: $fa $b8 $c2
+	ld		a, (wGameMode)		; $15eb: $fa $b8 $c2
 	and		a			; $15ee: $a7
 	jr		nz, func_15f4			; $15ef: $20 $03
 	jp		floorOptionsScreen			; $15f1: $c3 $05 $05
@@ -1984,7 +2000,7 @@ func_169b:
 	ld		($cf1c), a		; $16ab: $ea $1c $cf
 	ld		a, $01			; $16ae: $3e $01
 	ld		($cf33), a		; $16b0: $ea $33 $cf
-	ld		a, (wIsScrollingLevel)		; $16b3: $fa $b8 $c2
+	ld		a, (wGameMode)		; $16b3: $fa $b8 $c2
 	and		a			; $16b6: $a7
 	jr		z, func_16d3			; $16b7: $28 $1a
 	ld		a, (wc2bb)		; $16b9: $fa $bb $c2
@@ -1992,7 +2008,7 @@ func_169b:
 	ld		(wc2bb), a		; $16bd: $ea $bb $c2
 	ld		a, (wc2bb)		; $16c0: $fa $bb $c2
 	ld		b, a			; $16c3: $47
-	ld		a, (wc2b9)		; $16c4: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $16c4: $fa $b9 $c2
 	add		$01			; $16c7: $c6 $01
 	cp		b			; $16c9: $b8
 	jr		nz, func_16d3			; $16ca: $20 $07
@@ -2092,12 +2108,12 @@ func_178a:
 	ret					; $1791: $c9
 
 func_1792:
-	ld		a, (wIsScrollingLevel)
+	ld		a, (wGameMode)
 	and		a
 	jr		z, flashLevelOnStairsLevelClear
 
 	; is non-stairs level - scroll through to left?
-	call		func_0674			; gets next level?
+	call		getNextRoomIndexForScrollingLevel			; gets next level?
 	call		loadAllLevelData
 	call		func_1cdd			; draws screen details?
 	call		func_1a64			; $17a1: $cd $64 $1a
@@ -2144,8 +2160,8 @@ waitUntil_0a_VBlanksHandled:
 
 
 func_17dc:
-	ld		a, (wIsScrollingLevel)		; $17dc: $fa $b8 $c2
-	cp		$01			; $17df: $fe $01
+	ld		a, (wGameMode)		; $17dc: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $17df: $fe $01
 	jr		nz, func_184c			; $17e1: $20 $69
 
 	; is scrolling level
@@ -2156,21 +2172,21 @@ func_17dc:
 
 	ld		hl, $98ad		; $17ef: $21 $ad $98
 	call		func_3d8c			; $17f2: $cd $8c $3d
-	ld		a, (wcf43)		; $17f5: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $17f5: $fa $43 $cf
 	and		a			; $17f8: $a7
 	jr		z, +			; $17f9: $28 $04
 	xor		a			; $17fb: $af
 	ld		(wDifficulty), a		; $17fc: $ea $c0 $c2
 +
-	ld		a, (wcf43)		; $17ff: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $17ff: $fa $43 $cf
 	and		a			; $1802: $a7
 	jr		z, +			; $1803: $28 $05
 	ld		a, $05			; $1805: $3e $05
-	ld		(wc2b9), a		; $1807: $ea $b9 $c2
+	ld		(wNumberOfRandomRoomsForDifficulty), a		; $1807: $ea $b9 $c2
 +
 	ld		hl, $98e7		; $180a: $21 $e7 $98
 	call		func_3df0			; $180d: $cd $f0 $3d
-	ld		a, (wcf43)		; $1810: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $1810: $fa $43 $cf
 	and		a			; $1813: $a7
 	jr		z, +			; $1814: $28 $05
 	ld		a, $76			; $1816: $3e $76
@@ -2240,7 +2256,7 @@ func_18a2:
 	ret					; $18a2: $c9
 
 func_18a3:
-	ld		a, (wcf43)		; $18a3: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $18a3: $fa $43 $cf
 	and		a			; $18a6: $a7
 	jr		z, func_18e2			; $18a7: $28 $39
 	ld		hl, $cedf		; $18a9: $21 $df $ce
@@ -2289,7 +2305,7 @@ func_18e2:
 	ld		($ceec), a		; $18f0: $ea $ec $ce
 	or		b			; $18f3: $b0
 	jr		z, func_1930			; $18f4: $28 $3a
-	ld		a, (wc2b9)		; $18f6: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $18f6: $fa $b9 $c2
 	ld		($ceed), a		; $18f9: $ea $ed $ce
 	ld		b, $04			; $18fc: $06 $04
 	ld		hl, $cee8		; $18fe: $21 $e8 $ce
@@ -2515,35 +2531,38 @@ func_1a7a:
 	push		bc			; $1a7b: $c5
 	ld		de, $c2d4		; $1a7c: $11 $d4 $c2
 	ld		bc, $c2dc		; $1a7f: $01 $dc $c2
-	cp		$c0			; $1a82: $fe $c0
-	jr		nz, func_1a8b			; $1a84: $20 $05
+	cp		OBJ_KWIRK			; $1a82: $fe $c0
+	jr		nz, +			; $1a84: $20 $05
 	call		func_1aea			; $1a86: $cd $ea $1a
 	jr		func_1ab0			; $1a89: $18 $25
-func_1a8b:
+
++
 	inc		de			; $1a8b: $13
 	inc		de			; $1a8c: $13
 	inc		bc			; $1a8d: $03
 	inc		bc			; $1a8e: $03
-	cp		$c1			; $1a8f: $fe $c1
-	jr		nz, func_1a98			; $1a91: $20 $05
+	cp		OBJ_EDDIE_EGGPLANT			; $1a8f: $fe $c1
+	jr		nz, +			; $1a91: $20 $05
 	call		func_1aea			; $1a93: $cd $ea $1a
 	jr		func_1ab0			; $1a96: $18 $18
-func_1a98:
+
++
 	inc		de			; $1a98: $13
 	inc		de			; $1a99: $13
 	inc		bc			; $1a9a: $03
 	inc		bc			; $1a9b: $03
-	cp		$c2			; $1a9c: $fe $c2
-	jr		nz, func_1aa5			; $1a9e: $20 $05
+	cp		OBJ_PEPPER_PETE			; $1a9c: $fe $c2
+	jr		nz, +			; $1a9e: $20 $05
 	call		func_1aea			; $1aa0: $cd $ea $1a
 	jr		func_1ab0			; $1aa3: $18 $0b
-func_1aa5:
+
++
 	inc		de			; $1aa5: $13
 	inc		de			; $1aa6: $13
 	inc		bc			; $1aa7: $03
 	inc		bc			; $1aa8: $03
-	cp		$c3			; $1aa9: $fe $c3
-	jr		nz, func_1ac5			; $1aab: $20 $18
+	cp		OBJ_CURLY_CARROT			; $1aa9: $fe $c3
+	jr		nz, +			; $1aab: $20 $18
 	call		func_1aea			; $1aad: $cd $ea $1a
 func_1ab0:
 	ld		a, l			; $1ab0: $7d
@@ -2559,10 +2578,11 @@ func_1ab0:
 	ldh		a, (<hFF8D)		; $1abf: $f0 $8d
 	inc		bc			; $1ac1: $03
 	ld		(bc), a			; $1ac2: $02
-	jr		func_1adc			; $1ac3: $18 $17
-func_1ac5:
-	cp		$10			; $1ac5: $fe $10
-	jr		nz, func_1adc			; $1ac7: $20 $13
+	jr		@specialObjectProcessed			; $1ac3: $18 $17
+
++
+	cp		OBJ_STAIRS			; $1ac5: $fe $10
+	jr		nz, @specialObjectProcessed			; $1ac7: $20 $13
 	ld		a, l			; $1ac9: $7d
 	ldh		(<hFF90), a		; $1aca: $e0 $90
 	ld		a, h			; $1acc: $7c
@@ -2572,7 +2592,8 @@ func_1ac5:
 	ld		($c2e4), a		; $1ad4: $ea $e4 $c2
 	ldh		a, (<hFF8D)		; $1ad7: $f0 $8d
 	ld		($c2e5), a		; $1ad9: $ea $e5 $c2
-func_1adc:
+
+@specialObjectProcessed:
 	pop		bc			; $1adc: $c1
 	inc		hl			; $1add: $23
 	dec		bc			; $1ade: $0b
@@ -2595,7 +2616,6 @@ func_1af7:
 	push		hl			; $1af8: $e5
 	call		func_2bcb			; $1af9: $cd $cb $2b
 
-; Unused?
 func_1afc:
 	pop		hl			; $1afc: $e1
 	pop		bc			; $1afd: $c1
@@ -2747,7 +2767,7 @@ loadInGameMenu:
 func_1be0:
 	call		clear1st100bytesOfWram			; $1be0: $cd $81 $1f
 	call		func_1aff			; $1be3: $cd $ff $1a
-	ld		a, (wIsScrollingLevel)		; $1be6: $fa $b8 $c2
+	ld		a, (wGameMode)		; $1be6: $fa $b8 $c2
 	and		a			; $1be9: $a7
 	jr		nz, func_1c21			; $1bea: $20 $35
 	ld		hl, $c098		; $1bec: $21 $98 $c0
@@ -2764,7 +2784,7 @@ func_1be0:
 	pop		af			; $1c00: $f1
 	ldi		(hl), a			; $1c01: $22
 	ld		hl, stairsOam		; $1c02: $21 $9a $c0
-	ld		a, ($c2be)		; $1c05: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $1c05: $fa $be $c2
 	ld		de, data_3f01		; $1c08: $11 $01 $3f
 	sla		a			; $1c0b: $cb $27
 	add		e			; $1c0d: $83
@@ -2915,16 +2935,16 @@ func_1cdd:
 	ld		b, SND_12			; $1cdd: $06 $12
 	rst_playSound
 
-	; redundant check? this is only called by 1 function that checks this
-	ld		a, (wIsScrollingLevel)		; $1ce0: $fa $b8 $c2
-	cp		$01			; $1ce3: $fe $01
+	; TODO: redundant check? this is only called by 1 function that checks this
+	ld		a, (wGameMode)		; $1ce0: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $1ce3: $fe $01
 	jr		nz, +			; $1ce5: $20 $03
 	; scrolling level
 	call		func_20b2			; $1ce7: $cd $b2 $20
 +
 	ld		a, (wc2bb)		; $1cea: $fa $bb $c2
 	ld		b, a			; $1ced: $47
-	ld		a, (wc2b9)		; $1cee: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $1cee: $fa $b9 $c2
 	sub		b			; $1cf1: $90
 	inc		a			; $1cf2: $3c
 	call		get2DigitsToDrawFromNonBCD_A			; $1cf3: $cd $12 $21
@@ -2947,7 +2967,7 @@ func_1cdd:
 	ld		bc, $000c		; $1d18: $01 $0c $00
 	ld		a, $ff			; $1d1b: $3e $ff
 	push		af			; $1d1d: $f5
-	ld		a, ($c2be)		; $1d1e: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $1d1e: $fa $be $c2
 	and		a			; $1d21: $a7
 	jr		z, func_1d29			; $1d22: $28 $05
 	pop		af			; $1d24: $f1
@@ -2968,7 +2988,7 @@ func_1d2a:
 	xor		a			; $1d42: $af
 	ld		($cf1f), a		; $1d43: $ea $1f $cf
 func_1d46:
-	ld		a, (wcf43)		; $1d46: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $1d46: $fa $43 $cf
 	and		a			; $1d49: $a7
 	call		nz, resetSerialTransfer		; $1d4a: $c4 $11 $70
 	ldh		a, (R_SCX)		; $1d4d: $f0 $43
@@ -3049,9 +3069,11 @@ func_1da8:
 func_1dd9:
 	ld		b, $03			; $1dd9: $06 $03
 	ld		de, $0000		; $1ddb: $11 $00 $00
-	ld		a, ($c2be)		; $1dde: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $1dde: $fa $be $c2
 	and		a			; $1de1: $a7
 	jr		z, +			; $1de2: $28 $05
+
+	; is diagonal view
 	ld		b, $04			; $1de4: $06 $04
 	ld		de, $0003		; $1de6: $11 $03 $00
 +
@@ -3137,8 +3159,8 @@ func_1e39:
 func_1e73:
 	ld		($cf22), a		; $1e73: $ea $22 $cf
 	ld		hl, $982b		; $1e76: $21 $2b $98
-	ld		a, (wIsScrollingLevel)		; $1e79: $fa $b8 $c2
-	cp		$01			; $1e7c: $fe $01
+	ld		a, (wGameMode)		; $1e79: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $1e7c: $fe $01
 	jr		nz, +			; $1e7e: $20 $03
 	ld		hl, $99c1		; $1e80: $21 $c1 $99
 +
@@ -4605,7 +4627,7 @@ func_26e0:
 	ret					; $26e1: $c9
 
 func_26e2:
-	ld		a, ($c2be)		; $26e2: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $26e2: $fa $be $c2
 	and		a			; $26e5: $a7
 	jr		z, +			; $26e6: $28 $07
 	ld		a, ($c2f9)		; $26e8: $fa $f9 $c2
@@ -4640,7 +4662,7 @@ func_26e2:
 	ld		h, a			; $271c: $67
 	call		func_286b			; $271d: $cd $6b $28
 	call		func_283c			; $2720: $cd $3c $28
-	ld		a, ($c2be)		; $2723: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $2723: $fa $be $c2
 	and		a			; $2726: $a7
 	jr		z, +			; $2727: $28 $07
 	ld		a, ($c2f9)		; $2729: $fa $f9 $c2
@@ -4696,7 +4718,7 @@ func_2731:
 	ld		d, $00			; $277b: $16 $00
 	add		hl, de			; $277d: $19
 	push		hl			; $277e: $e5
-	ld		a, ($c2be)		; $277f: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $277f: $fa $be $c2
 	and		a			; $2782: $a7
 	jr		z, func_27b7			; $2783: $28 $32
 	ld		a, ($cf09)		; $2785: $fa $09 $cf
@@ -4800,7 +4822,7 @@ func_280e:
 func_2821:
 	set		1, b			; $2821: $cb $c8
 func_2823:
-	ld		a, ($c2be)		; $2823: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $2823: $fa $be $c2
 	and		a			; $2826: $a7
 	jr		nz, +			; $2827: $20 $02
 	ld		c, $00			; $2829: $0e $00
@@ -4880,7 +4902,7 @@ func_2890:
 	ld		a, ($cf35)		; $2890: $fa $35 $cf
 	and		a			; $2893: $a7
 	ret		z			; $2894: $c8
-	ld		a, ($c2be)		; $2895: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $2895: $fa $be $c2
 	and		a			; $2898: $a7
 	jr		z, +			; $2899: $28 $07
 	ld		a, ($c2f9)		; $289b: $fa $f9 $c2
@@ -4946,7 +4968,7 @@ func_28ce:
 	dec		c			; $2902: $0d
 	jr		nz, func_28bf			; $2903: $20 $ba
 	call		waitUntilVBlankHandled_andXorCf39			; $2905: $cd $d2 $0f
-	ld		a, ($c2be)		; $2908: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $2908: $fa $be $c2
 	and		a			; $290b: $a7
 	ret		z			; $290c: $c8
 	ld		a, ($c2f9)		; $290d: $fa $f9 $c2
@@ -4954,7 +4976,7 @@ func_28ce:
 	ld		($c2f9), a		; $2911: $ea $f9 $c2
 	ret					; $2914: $c9
 func_2915:
-	ld		a, ($c2be)		; $2915: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $2915: $fa $be $c2
 	and		a			; $2918: $a7
 	jr		z, func_28c8			; $2919: $28 $ad
 	ld		a, ($cf35)		; $291b: $fa $35 $cf
@@ -5024,7 +5046,7 @@ func_296c:
 func_2979:
 	call		func_2e4e			; $2979: $cd $4e $2e
 	ld		b, $09			; $297c: $06 $09
-	ld		a, ($c2be)		; $297e: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $297e: $fa $be $c2
 	and		a			; $2981: $a7
 	jr		z, +			; $2982: $28 $02
 	ld		b, $0c			; $2984: $06 $0c
@@ -5104,7 +5126,7 @@ func_29aa:
 	call		func_26e2			; $29ed: $cd $e2 $26
 	ld		hl, $c2f9		; $29f0: $21 $f9 $c2
 	inc		(hl)			; $29f3: $34
-	ld		a, ($c2be)		; $29f4: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $29f4: $fa $be $c2
 	inc		a			; $29f7: $3c
 	ld		e, a			; $29f8: $5f
 	ld		($cf1b), a		; $29f9: $ea $1b $cf
@@ -5149,7 +5171,7 @@ func_29aa:
 	call		waitUntilVBlankHandled_andXorCf39			; $2a31: $cd $d2 $0f
 	dec		d			; $2a34: $15
 	jr		nz, -			; $2a35: $20 $fa
-	ld		a, ($c2be)		; $2a37: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $2a37: $fa $be $c2
 	and		a			; $2a3a: $a7
 	jr		z, +			; $2a3b: $28 $04
 	ld		hl, $c2f9		; $2a3d: $21 $f9 $c2
@@ -5179,7 +5201,7 @@ func_2a65:
 	push		de			; $2a66: $d5
 	ld		($cf1c), a		; $2a67: $ea $1c $cf
 	ld		hl, data_2ad5		; $2a6a: $21 $d5 $2a
-	ld		a, ($c2be)		; $2a6d: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $2a6d: $fa $be $c2
 	and		a			; $2a70: $a7
 	jr		z, +			; $2a71: $28 $08
 	ld		a, c			; $2a73: $79
@@ -5431,25 +5453,25 @@ func_2b9e:
 
 
 func_2bcb:
-	ldh		a, ($90)		; $2bcb: $f0 $90
+	ldh		a, (<hFF90)		; $2bcb: $f0 $90
 	ld		e, a			; $2bcd: $5f
-	ldh		a, ($8f)		; $2bce: $f0 $8f
-	sub		$c0			; $2bd0: $d6 $c0
+	ldh		a, (<hFF8F)		; $2bce: $f0 $8f
+	sub		>$c000			; $2bd0: $d6 $c0
 	ld		d, a			; $2bd2: $57
 	ld		bc, $0000		; $2bd3: $01 $00 $00
 	ld		a, e			; $2bd6: $7b
-func_2bd7:
-	cp		$14			; $2bd7: $fe $14
-	jr		c, func_2be2			; $2bd9: $38 $07
-func_2bdb:
+--
+	cp		ROOM_WIDTH			; $2bd7: $fe $14
+	jr		c, +			; $2bd9: $38 $07
+-
 	inc		bc			; $2bdb: $03
-	sub		$14			; $2bdc: $d6 $14
+	sub		ROOM_WIDTH			; $2bdc: $d6 $14
 	scf					; $2bde: $37
 	ccf					; $2bdf: $3f
-	jr		func_2bd7			; $2be0: $18 $f5
-func_2be2:
+	jr		--			; $2be0: $18 $f5
++
 	dec		d			; $2be2: $15
-	jr		nz, func_2bdb			; $2be3: $20 $f6
+	jr		nz, -			; $2be3: $20 $f6
 	sla		a			; $2be5: $cb $27
 	sla		a			; $2be7: $cb $27
 	sla		a			; $2be9: $cb $27
@@ -6034,18 +6056,18 @@ data_31d8:
 	pop		af			; $31e6: $f1
 
 func_31e7:
-	ld		de, $c311		; $31e7: $11 $11 $c3
+	ld		de, wListOfRandomLevels		; $31e7: $11 $11 $c3
 	ld		a, (wc377)		; $31ea: $fa $77 $c3
-	ld		($cf28), a		; $31ed: $ea $28 $cf
-	ld		($cf29), a		; $31f0: $ea $29 $cf
-	ld		($cf2a), a		; $31f3: $ea $2a $cf
-	ld		($cf2b), a		; $31f6: $ea $2b $cf
+	ld		(wRng1), a		; $31ed: $ea $28 $cf
+	ld		(wRng2), a		; $31f0: $ea $29 $cf
+	ld		(wRng3), a		; $31f3: $ea $2a $cf
+	ld		(wRng4), a		; $31f6: $ea $2b $cf
 	ld		c, $63			; $31f9: $0e $63
 -
-	call		func_3254			; $31fb: $cd $54 $32
+	call		getNextRandomNumber			; $31fb: $cd $54 $32
 	ld		l, a			; $31fe: $6f
 	ld		h, $00			; $31ff: $26 $00
-	call		func_3ec9			; $3201: $cd $c9 $3e
+	call		getScrollingLevel1stRoomIdxAndRangeOfRoomsBasedOnDifficulty			; $3201: $cd $c9 $3e
 	ld		a, b			; $3204: $78
 	call		hlDivModA			; $3205: $cd $2b $1f
 	add		$1e			; $3208: $c6 $1e
@@ -6056,10 +6078,11 @@ func_31e7:
 	inc		de			; $3212: $13
 	dec		c			; $3213: $0d
 	jr		nz, -			; $3214: $20 $e5
-	ld		a, (wc2b9)		; $3216: $fa $b9 $c2
+
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $3216: $fa $b9 $c2
 	ld		b, a			; $3219: $47
-	ld		a, (wIsScrollingLevel)		; $321a: $fa $b8 $c2
-	cp		$01			; $321d: $fe $01
+	ld		a, (wGameMode)		; $321a: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $321d: $fe $01
 	jr		z, +			; $321f: $28 $08
 	ld		a, (wc2ba)		; $3221: $fa $ba $c2
 	ld		c, a			; $3224: $4f
@@ -6104,29 +6127,43 @@ func_3251:
 	pop		de			; $3252: $d1
 	ret					; $3253: $c9
 
-func_3254:
-	ld		a, ($cf2b)		; $3254: $fa $2b $cf
-	rr		a			; $3257: $cb $1f
-	ld		($cf2b), a		; $3259: $ea $2b $cf
-	ld		a, ($cf28)		; $325c: $fa $28 $cf
-	adc		$25			; $325f: $ce $25
-	ld		($cf28), a		; $3261: $ea $28 $cf
-	ld		b, a			; $3264: $47
-	ld		a, ($cf29)		; $3265: $fa $29 $cf
-	adc		$33			; $3268: $ce $33
-	ld		($cf29), a		; $326a: $ea $29 $cf
-	adc		b			; $326d: $88
-	ld		b, a			; $326e: $47
-	ld		a, ($cf2a)		; $326f: $fa $2a $cf
-	adc		$53			; $3272: $ce $53
-	ld		($cf2a), a		; $3274: $ea $2a $cf
-	adc		b			; $3277: $88
-	ld		b, a			; $3278: $47
-	ld		a, ($cf2b)		; $3279: $fa $2b $cf
-	rl		a			; $327c: $cb $17
-	xor		b			; $327e: $a8
-	ld		($cf2b), a		; $327f: $ea $2b $cf
-	ret					; $3282: $c9
+;;
+; @param[out]	a		Random number
+getNextRandomNumber:
+	; divide cf2b by 2 and add carry+$25 to cf28
+	ld		a, (wRng4)
+	rr		a
+	ld		(wRng4), a
+	ld		a, (wRng1)
+	adc		$25
+	ld		(wRng1), a
+
+	; add carry from cf28 + $33 to cf29
+	; b = cf28
+	ld		b, a
+	ld		a, (wRng2)
+	adc		$33
+	ld		(wRng2), a
+
+	; add carry from cf29 + cf28 + that carry + 55 into cf2a
+	; b = cf29+cf28
+	adc		b
+	ld		b, a
+	ld		a, (wRng3)
+	adc		$53
+	ld		(wRng3), a
+
+	; add carry from the previous (+55)
+	; b/a = cf2a+cf29+cf28
+	adc		b
+	ld		b, a
+	ld		a, (wRng4)
+	; xor original a without rightmost bit, with b/a above and store back into cf2b
+	rl		a
+	xor		b
+	ld		(wRng4), a
+	ret
+
 
 func_3283:
 	ld		a, ($cf3d)		; $3283: $fa $3d $cf
@@ -6189,7 +6226,7 @@ serialInterrupt:
 	jp		serialFunc_36bc			; $32e9: $c3 $bc $36
 
 serialFunc_32ec:
-	ld		a, (wcf43)		; $32ec: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $32ec: $fa $43 $cf
 	and		a			; $32ef: $a7
 	jr		z, +			; $32f0: $28 $03
 	ld		(wcf3a), a		; $32f2: $ea $3a $cf
@@ -6275,10 +6312,10 @@ serialFunc_3384:
 	ld		a, (wc375)		; $3384: $fa $75 $c3
 	cp		$66			; $3387: $fe $66
 	jr		z, serialFunc_3374			; $3389: $28 $e9
-	ld		a, (wcf43)		; $338b: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $338b: $fa $43 $cf
 	and		a			; $338e: $a7
 	jr		nz, +			; $338f: $20 $0c
-	ld		a, (wc2b9)		; $3391: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $3391: $fa $b9 $c2
 	ld		(wc37d), a		; $3394: $ea $7d $c3
 	ld		a, (wc2ba)		; $3397: $fa $ba $c2
 	ld		(wc37e), a		; $339a: $ea $7e $c3
@@ -6286,7 +6323,7 @@ serialFunc_3384:
 	xor		a			; $339d: $af
 	ld		(wcf3a), a		; $339e: $ea $3a $cf
 	ld		(wcf3c), a		; $33a1: $ea $3c $cf
-	ld		(wcf43), a		; $33a4: $ea $43 $cf
+	ld		(wIsDemoScenes), a		; $33a4: $ea $43 $cf
 	ld		a, $01			; $33a7: $3e $01
 	ld		(wcf42), a		; $33a9: $ea $42 $cf
 	xor		a			; $33ac: $af
@@ -6462,7 +6499,7 @@ serialFunc_34dc:
 	jp		serialFunc_311f			; $34e7: $c3 $1f $33
 
 serialFunc_34ea:
-	ld		a, (wc2b9)		; $34ea: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $34ea: $fa $b9 $c2
 	ldh		(R_SB), a		; $34ed: $e0 $01
 	ld		hl, SC		; $34ef: $21 $02 $ff
 	res		0, (hl)			; $34f2: $cb $86
@@ -6528,7 +6565,7 @@ func_354d:
 	jp		func_107e			; $3553: $c3 $7e $10
 
 func_3556:
-	ld		a, (wcf43)		; $3556: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $3556: $fa $43 $cf
 	and		a			; $3559: $a7
 	jp		z, func_1083		; $355a: $ca $83 $10
 	ldh		a, (<hKeysPressed)		; $355d: $f0 $8b
@@ -6544,7 +6581,7 @@ func_356f:
 	pop		af			; $356f: $f1
 	xor		a			; $3570: $af
 	ldh		(R_SCX), a		; $3571: $e0 $43
-	ld		(wcf43), a		; $3573: $ea $43 $cf
+	ld		(wIsDemoScenes), a		; $3573: $ea $43 $cf
 	ld		(wcf3a), a		; $3576: $ea $3a $cf
 	ei					; $3579: $fb
 	jp		func_018d			; $357a: $c3 $8d $01
@@ -6647,7 +6684,7 @@ func_3637:
 	ldh		a, (<hNewKeysPressed)		; $3644: $f0 $8c
 	bit		BTN_BIT_B, a			; $3646: $cb $4f
 	jr		nz, func_365b			; $3648: $20 $11
-	ld		a, (wc2b9)		; $364a: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $364a: $fa $b9 $c2
 func_364d:
 	ld		(wc375), a		; $364d: $ea $75 $c3
 	call		func_3283			; $3650: $cd $83 $32
@@ -6699,7 +6736,7 @@ func_3689:
 func_3693:
 	ld		a, (wc2bb)		; $3693: $fa $bb $c2
 	ld		($c380), a		; $3696: $ea $80 $c3
-	ld		a, (wc2b9)		; $3699: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $3699: $fa $b9 $c2
 	ld		($c37f), a		; $369c: $ea $7f $c3
 	ld		a, $01			; $369f: $3e $01
 	call		func_1e1f			; $36a1: $cd $1f $1e
@@ -6707,8 +6744,8 @@ func_3693:
 
 func_36a5:
 	call		clear1st100bytesOfWram			; $36a5: $cd $81 $1f
-	ld		a, (wIsScrollingLevel)		; $36a8: $fa $b8 $c2
-	cp		$01			; $36ab: $fe $01
+	ld		a, (wGameMode)		; $36a8: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $36ab: $fe $01
 	jr		z, func_36ed			; $36ad: $28 $3e
 	ld		a, $71			; $36af: $3e $71
 	ld		(wcf02), a		; $36b1: $ea $02 $cf
@@ -6755,8 +6792,8 @@ func_36ed:
 	ld		($c37a), a		; $36ff: $ea $7a $c3
 	ld		($cf3f), a		; $3702: $ea $3f $cf
 	call		func_3693			; $3705: $cd $93 $36
-	ld		a, (wIsScrollingLevel)		; $3708: $fa $b8 $c2
-	cp		$01			; $370b: $fe $01
+	ld		a, (wGameMode)		; $3708: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $370b: $fe $01
 	jr		nz, +			; $370d: $20 $03
 	call		func_20b2			; $370f: $cd $b2 $20
 +
@@ -6777,14 +6814,14 @@ func_36ed:
 func_3732:
 	ld		a, $09			; $3732: $3e $09
 	ldh		(R_IE), a		; $3734: $e0 $ff
-	ld		a, (wcf43)		; $3736: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $3736: $fa $43 $cf
 	and		a			; $3739: $a7
 	call		nz, resetSerialTransfer		; $373a: $c4 $11 $70
 	call		drawLevelClearScreen			; $373d: $cd $f7 $39
 	call		func_17dc			; $3740: $cd $dc $17
 	call		func_7000			; $3743: $cd $00 $70
-	ld		a, (wIsScrollingLevel)		; $3746: $fa $b8 $c2
-	cp		$01			; $3749: $fe $01
+	ld		a, (wGameMode)		; $3746: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $3749: $fe $01
 	jp		z, func_3804		; $374b: $ca $04 $38
 	call		func_3754			; $374e: $cd $54 $37
 	jp		func_39bd			; $3751: $c3 $bd $39
@@ -6880,7 +6917,7 @@ func_37ff:
 	jr		func_37d6			; $3802: $18 $d2
 
 func_3804:
-	ld		a, (wcf43)		; $3804: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $3804: $fa $43 $cf
 	and		a			; $3807: $a7
 	jr		nz, func_3816			; $3808: $20 $0c
 	call		pollInput			; $380a: $cd $45 $2b
@@ -7056,8 +7093,8 @@ func_392a:
 	xor		a			; $394e: $af
 	ld		(wcf3a), a		; $394f: $ea $3a $cf
 	call		func_17dc			; $3952: $cd $dc $17
-	ld		a, (wIsScrollingLevel)		; $3955: $fa $b8 $c2
-	cp		$01			; $3958: $fe $01
+	ld		a, (wGameMode)		; $3955: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $3958: $fe $01
 	jp		z, func_3804		; $395a: $ca $04 $38
 	ld		a, (wcf3c)		; $395d: $fa $3c $cf
 	and		a			; $3960: $a7
@@ -7109,7 +7146,7 @@ func_39a5:
 
 func_39bd:
 	ld		a, (wc37d)		; $39bd: $fa $7d $c3
-	ld		(wc2b9), a		; $39c0: $ea $b9 $c2
+	ld		(wNumberOfRandomRoomsForDifficulty), a		; $39c0: $ea $b9 $c2
 	ld		a, (wc37e)		; $39c3: $fa $7e $c3
 	ld		(wc2ba), a		; $39c6: $ea $ba $c2
 	call		clear1st100bytesOfWram			; $39c9: $cd $81 $1f
@@ -7153,8 +7190,8 @@ drawLevelClearScreen:
 	ld		de, $1206
 	call		loadPipesAndBlankTilesInside
 
-	ld		a, (wIsScrollingLevel)
-	cp		$01
+	ld		a, (wGameMode)
+	cp		GAMEMODE_HEADING_OUT
 	ret		z
 
 	ld		hl, BG_MAP1+$1a3
@@ -7333,8 +7370,8 @@ func_3ba5:
 	xor		a			; $3ba5: $af
 	ldh		(<hNewKeysPressed), a		; $3ba6: $e0 $8c
 	call		loadLevelSelectTiles			; $3ba8: $cd $a7 $06
-	ld		a, (wIsScrollingLevel)		; $3bab: $fa $b8 $c2
-	cp		$01			; $3bae: $fe $01
+	ld		a, (wGameMode)		; $3bab: $fa $b8 $c2
+	cp		GAMEMODE_HEADING_OUT			; $3bae: $fe $01
 	jr		z, +			; $3bb0: $28 $09
 	ld		hl, $9943		; $3bb2: $21 $43 $99
 	ld		de, contestProgressLayoutData		; $3bb5: $11 $fd $08
@@ -7351,7 +7388,7 @@ func_3ba5:
 	call		loadBGTileMapData			; $3bd3: $cd $d4 $3a
 	ld		b, $00			; $3bd6: $06 $00
 	ld		c, $1e			; $3bd8: $0e $1e
-	ld		a, (wc2b9)		; $3bda: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $3bda: $fa $b9 $c2
 	ld		l, a			; $3bdd: $6f
 	ld		h, $00			; $3bde: $26 $00
 	ld		a, $0a			; $3be0: $3e $0a
@@ -7392,14 +7429,14 @@ func_3c1f:
 	ld		a, (wcf3c)		; $3c1f: $fa $3c $cf
 	and		a			; $3c22: $a7
 	jr		nz, +			; $3c23: $20 $0c
-	ld		a, (wc2b9)		; $3c25: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $3c25: $fa $b9 $c2
 	ldh		(R_SB), a		; $3c28: $e0 $01
 	ld		hl, SC		; $3c2a: $21 $02 $ff
 	res		0, (hl)			; $3c2d: $cb $86
 	set		7, (hl)			; $3c2f: $cb $fe
 +
-	ld		a, (wIsScrollingLevel)		; $3c31: $fa $b8 $c2
-	cp		$02			; $3c34: $fe $02
+	ld		a, (wGameMode)		; $3c31: $fa $b8 $c2
+	cp		GAMEMODE_VS_MODE			; $3c34: $fe $02
 	jr		z, func_3c3d			; $3c36: $28 $05
 	call		waitUntilVBlankHandled_andXorCf39			; $3c38: $cd $d2 $0f
 	jr		func_3c59			; $3c3b: $18 $1c
@@ -7491,7 +7528,7 @@ func_3cad:
 	ld		b, l			; $3cdd: $45
 	ld		a, ($c37b)		; $3cde: $fa $7b $c3
 	add		b			; $3ce1: $80
-	ld		(wc2b9), a		; $3ce2: $ea $b9 $c2
+	ld		(wNumberOfRandomRoomsForDifficulty), a		; $3ce2: $ea $b9 $c2
 	pop		bc			; $3ce5: $c1
 	jp		func_3c1f			; $3ce6: $c3 $1f $3c
 
@@ -7508,9 +7545,9 @@ func_3cec:
 func_3cf4:
 	ld		b, SND_MENU_OPTION_SELECTED			; $3cf4: $06 $10
 	rst_playSound
-	ld		a, (wc2b9)		; $3cf7: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $3cf7: $fa $b9 $c2
 	call		incAIf0			; $3cfa: $cd $15 $3d
-	ld		(wc2b9), a		; $3cfd: $ea $b9 $c2
+	ld		(wNumberOfRandomRoomsForDifficulty), a		; $3cfd: $ea $b9 $c2
 	ld		a, (wc2ba)		; $3d00: $fa $ba $c2
 	call		incAIf0			; $3d03: $cd $15 $3d
 	ld		(wc2ba), a		; $3d06: $ea $ba $c2
@@ -7537,8 +7574,8 @@ func_3d1d:
 	xor		a			; $3d1d: $af
 	ld		(wcf3a), a		; $3d1e: $ea $3a $cf
 	call		vramLoad_mainGameTiles			; $3d21: $cd $51 $02
-	ld		a, (wIsScrollingLevel)		; $3d24: $fa $b8 $c2
-	cp		$02			; $3d27: $fe $02
+	ld		a, (wGameMode)		; $3d24: $fa $b8 $c2
+	cp		GAMEMODE_VS_MODE			; $3d27: $fe $02
 	jr		nz, +			; $3d29: $20 $05
 	call		contestPreGameScreen			; $3d2b: $cd $34 $3d
 	jr		@done			; $3d2e: $18 $03
@@ -7613,7 +7650,7 @@ confirmGoingUpOrHeadingOutScreen:
 +
 	ld		hl, $9903		; $3dbd: $21 $03 $99
 	call		loadLevelSelectTiles_andLayoutData			; $3dc0: $cd $ce $06
-	ld		a, (wIsScrollingLevel)		; $3dc3: $fa $b8 $c2
+	ld		a, (wGameMode)		; $3dc3: $fa $b8 $c2
 	and		a			; $3dc6: $a7
 	jr		nz, func_3de0			; $3dc7: $20 $17
 	ld		a, (wRoomIndex)		; $3dc9: $fa $bf $c2
@@ -7637,7 +7674,7 @@ func_3de6:
 	ret					; $3def: $c9
 
 func_3df0:
-	ld		a, (wc2b9)		; $3df0: $fa $b9 $c2
+	ld		a, (wNumberOfRandomRoomsForDifficulty)		; $3df0: $fa $b9 $c2
 func_3df3:
 	push		af			; $3df3: $f5
 	push		hl			; $3df4: $e5
@@ -7648,8 +7685,8 @@ func_3df3:
 	call		get2DigitsToDrawFromNonBCD_A			; $3dfb: $cd $12 $21
 	call		draw2DigitsAtHl			; $3dfe: $cd $5d $20
 	ret		c			; $3e01: $d8
-	ld		a, (wIsScrollingLevel)		; $3e02: $fa $b8 $c2
-	cp		$02			; $3e05: $fe $02
+	ld		a, (wGameMode)		; $3e02: $fa $b8 $c2
+	cp		GAMEMODE_VS_MODE			; $3e05: $fe $02
 	ret		nz			; $3e07: $c0
 	ld		a, (wc2ba)		; $3e08: $fa $ba $c2
 	call		get2DigitsToDrawFromNonBCD_A			; $3e0b: $cd $12 $21
@@ -7666,17 +7703,21 @@ func_3df3:
 
 .include "layouts/group5.s"
 
-func_3ea9:
+populateListOfRandomLevelsBasedOnDifficulty:
 	xor		a			; $3ea9: $af
-	ld		($c374), a		; $3eaa: $ea $74 $c3
+	ld		(wCurrentLevelIdxInListOfRandomLevels), a		; $3eaa: $ea $74 $c3
 	ld		a, $28			; $3ead: $3e $28
 	ld		($cf45), a		; $3eaf: $ea $45 $cf
-	call		func_3ec9			; $3eb2: $cd $c9 $3e
+
+	call		getScrollingLevel1stRoomIdxAndRangeOfRoomsBasedOnDifficulty			; $3eb2: $cd $c9 $3e
 	add		30			; $3eb5: $c6 $1e
+	; scrolling levels start at idx 30-149
 	ld		(wRoomIndex), a		; $3eb7: $ea $bf $c2
+
 	ld		a, b			; $3eba: $78
-	ld		(wc2b9), a		; $3ebb: $ea $b9 $c2
-	ld		hl, $c311		; $3ebe: $21 $11 $c3
+	ld		(wNumberOfRandomRoomsForDifficulty), a		; $3ebb: $ea $b9 $c2
+
+	ld		hl, wListOfRandomLevels		; $3ebe: $21 $11 $c3
 	ld		a, 30			; $3ec1: $3e $1e
 -
 	ldi		(hl), a			; $3ec3: $22
@@ -7685,21 +7726,24 @@ func_3ea9:
 	jr		nz, -			; $3ec6: $20 $fb
 	ret					; $3ec8: $c9
 
-func_3ec9:
-	push		hl			; $3ec9: $e5
-	ld		a, (wDifficulty)		; $3eca: $fa $c0 $c2
-	ld		hl, @difficultyTable		; $3ecd: $21 $d9 $3e
-	sla		a			; $3ed0: $cb $27
-	call		addAToHl			; $3ed2: $cd $6b $24
-	ldi		a, (hl)			; $3ed5: $2a
-	ld		b, (hl)			; $3ed6: $46
-	pop		hl			; $3ed7: $e1
-	ret					; $3ed8: $c9
+;;
+; @param[out]	a/b		2 values from table below based on difficulty
+getScrollingLevel1stRoomIdxAndRangeOfRoomsBasedOnDifficulty:
+	push		hl
+	ld		a, (wDifficulty)
+	ld		hl, @difficultyTable
+	sla		a
+	call		addAToHl
+	ldi		a, (hl)
+	ld		b, (hl)
+	pop		hl
+	ret
 
 @difficultyTable:
 	.db  0 30
-	.db 30 50
-	.db 80 40
+	.db 30 80-30
+	.db 80 120-80
+
 
 data_3edf:
 .db $ff
@@ -8116,7 +8160,7 @@ gfxData_5c00:
 
 ; All sound funcs from here on down?
 func_7000:
-	ld		a, (wcf43)		; $7000: $fa $43 $cf
+	ld		a, (wIsDemoScenes)		; $7000: $fa $43 $cf
 	and		a			; $7003: $a7
 	ret		z			; $7004: $c8
 startSerialTransfer:
@@ -8137,24 +8181,26 @@ resetSerialTransfer:
 
 loadDemoScenes:
 	ld		a, $01			; $701e: $3e $01
-	ld		(wcf43), a		; $7020: $ea $43 $cf
+	ld		(wIsDemoScenes), a		; $7020: $ea $43 $cf
 	ld		(wcf3c), a		; $7023: $ea $3c $cf
-	ld		($c2be), a		; $7026: $ea $be $c2
-	ld		(wIsScrollingLevel), a		; $7029: $ea $b8 $c2
+	ld		(wIsDiagonalView), a		; $7026: $ea $be $c2
+	ld		(wGameMode), a		; $7029: $ea $b8 $c2
+
 	xor		a			; $702c: $af
-	ld		($cede), a		; $702d: $ea $de $ce
-	ld		($cedc), a		; $7030: $ea $dc $ce
-	ld		($cedd), a		; $7033: $ea $dd $ce
+	ld		(wCurrentDemoSceneRoomIdx), a		; $702d: $ea $de $ce
+	ld		(wIdxOfDemoSceneMovementSteps), a		; $7030: $ea $dc $ce
+	ld		(wIdxOfDemoSceneMovementSteps+1), a		; $7033: $ea $dd $ce
+
 	ld		a, $05			; $7036: $3e $05
-	ld		(wc2b9), a		; $7038: $ea $b9 $c2
-	call		func_0674			; $703b: $cd $74 $06
+	ld		(wNumberOfRandomRoomsForDifficulty), a		; $7038: $ea $b9 $c2
+	call		getNextRoomIndexForScrollingLevel			; $703b: $cd $74 $06
 	call		resetSerialTransfer			; $703e: $cd $11 $70
 	jp		loadLevelForDemoScenes			; $7041: $c3 $e1 $01
 
 ; Unused?
 serialFunc_7044:
 	ld		a, $0a			; $7044: $3e $0a
-	ld		(wc2b9), a		; $7046: $ea $b9 $c2
+	ld		(wNumberOfRandomRoomsForDifficulty), a		; $7046: $ea $b9 $c2
 
 serialFunc_7049:
 	call		startSerialTransfer			; $7049: $cd $05 $70
@@ -8170,128 +8216,90 @@ serialFunc_7049:
 	call		waitUntilVBlankHandled_andXorCf39			; $7063: $cd $d2 $0f
 	jp		func_0351			; $7066: $c3 $51 $03
 
-func_7069:
-	ld		a, ($cedc)		; $7069: $fa $dc $ce
-	ld		l, a			; $706c: $6f
-	ld		a, ($cedd)		; $706d: $fa $dd $ce
-	ld		h, a			; $7070: $67
-	ld		a, $04			; $7071: $3e $04
-	call		hlDivModA			; $7073: $cd $2b $1f
-	push		af			; $7076: $f5
-	ld		a, l			; $7077: $7d
-	ld		hl, data_70f7		; $7078: $21 $f7 $70
-	call		addAToHl			; $707b: $cd $6b $24
-	ld		b, (hl)			; $707e: $46
-	pop		af			; $707f: $f1
+
+getKeyPressedForDemoScenes:
+	ld		a, (wIdxOfDemoSceneMovementSteps)
+	ld		l, a
+	ld		a, (wIdxOfDemoSceneMovementSteps+1)
+	ld		h, a
+	
+	ld		a, $04
+	call		hlDivModA
+	; a is div, l is mod
+	push		af
+	ld		a, l
+	ld		hl, demoScenesMovementData
+	call		addAToHl
+	ld		b, (hl)
+	pop		af
 -
-	and		a			; $7080: $a7
-	jr		z, func_708a			; $7081: $28 $07
-	sla		b			; $7083: $cb $20
-	sla		b			; $7085: $cb $20
-	dec		a			; $7087: $3d
-	jr		-			; $7088: $18 $f6
-func_708a:
-	ld		a, b			; $708a: $78
-	and		$c0			; $708b: $e6 $c0
-	jr		z, func_709f			; $708d: $28 $10
-	cp		$40			; $708f: $fe $40
-	jr		z, func_70a3			; $7091: $28 $10
-	cp		$80			; $7093: $fe $80
-	jr		z, func_709b			; $7095: $28 $04
-	ld		a, $10			; $7097: $3e $10
-	jr		func_70a5			; $7099: $18 $0a
-func_709b:
-	ld		a, $20			; $709b: $3e $20
-	jr		func_70a5			; $709d: $18 $06
-func_709f:
-	ld		a, $80			; $709f: $3e $80
-	jr		func_70a5			; $70a1: $18 $02
-func_70a3:
-	ld		a, $40			; $70a3: $3e $40
-func_70a5:
-	ldh		(<hKeysPressed), a		; $70a5: $e0 $8b
-	ld		a, ($cedc)		; $70a7: $fa $dc $ce
-	add		$01			; $70aa: $c6 $01
-	ld		($cedc), a		; $70ac: $ea $dc $ce
-	ld		a, ($cedd)		; $70af: $fa $dd $ce
-	adc		$00			; $70b2: $ce $00
-	ld		($cedd), a		; $70b4: $ea $dd $ce
-	call		waitUntilVBlankHandled_andXorCf39			; $70b7: $cd $d2 $0f
-	call		waitUntilVBlankHandled_andXorCf39			; $70ba: $cd $d2 $0f
-	call		waitUntilVBlankHandled_andXorCf39			; $70bd: $cd $d2 $0f
-	jp		func_10f7			; $70c0: $c3 $f7 $10
+	and		a
+	jr		z, @processByteOfMovementData
+	sla		b
+	sla		b
+	dec		a
+	jr		-
+	
+; @param	b		2 bits of movement data in the upper 2 bits of b
+@processByteOfMovementData:
+	ld		a, b
+	and		$c0
+	jr		z, @moveDown
+	cp		$40
+	jr		z, @moveUp
+	cp		$80
+	jr		z, @moveLeft
+	ld		a, BTN_RIGHT
+	jr		@storeButtonInKeysPressed
+
+@moveLeft:
+	ld		a, BTN_LEFT
+	jr		@storeButtonInKeysPressed
+
+@moveDown:
+	ld		a, BTN_DOWN
+	jr		@storeButtonInKeysPressed
+
+@moveUp:
+	ld		a, BTN_UP
+
+@storeButtonInKeysPressed:
+	ldh		(<hKeysPressed), a
+	ld		a, (wIdxOfDemoSceneMovementSteps)
+	add		$01
+	ld		(wIdxOfDemoSceneMovementSteps), a
+	ld		a, (wIdxOfDemoSceneMovementSteps+1)
+	adc		$00
+	ld		(wIdxOfDemoSceneMovementSteps+1), a
+	
+	call		waitUntilVBlankHandled_andXorCf39
+	call		waitUntilVBlankHandled_andXorCf39
+	call		waitUntilVBlankHandled_andXorCf39
+	jp		_handleMovementFromKeysPressed
 
 
-data_70c3:
-	jr		nz, $2e			; $70c3: $20 $2e
-	ld		h, $34			; $70c5: $26 $34
-.db $36
+demoSceneRooms:
+	.db $20 $2e $26 $34 $36
 
 .include "layouts/group8.s"
 
 
-data_70f7:
-	xor		d			; $70f7: $aa
-	and		d			; $70f8: $a2
-	sub		(hl)			; $70f9: $96
-	adc		a			; $70fa: $8f
-	ld		e, d			; $70fb: $5a
-	adc		d			; $70fc: $8a
-	xor		d			; $70fd: $aa
-	xor		d			; $70fe: $aa
-	xor		d			; $70ff: $aa
-	add		e			; $7100: $83
-	ld		e, b			; $7101: $58
-	ld		($0d02), sp		; $7102: $08 $02 $0d
-	ld		h, d			; $7105: $62
-	xor		d			; $7106: $aa
-	xor		d			; $7107: $aa
-	sub		(hl)			; $7108: $96
-	and		b			; $7109: $a0
-	and		b			; $710a: $a0
-	ldi		a, (hl)			; $710b: $2a
-	add		hl, bc			; $710c: $09
-	rst		$10			; $710d: $d7
-	ld		d, e			; $710e: $53
-	ld		e, a			; $710f: $5f
-	push		de			; $7110: $d5
-	xor		d			; $7111: $aa
-	add		d			; $7112: $82
-	sub		(hl)			; $7113: $96
-	and		b			; $7114: $a0
-	xor		d			; $7115: $aa
-	sub		(hl)			; $7116: $96
-	and		d			; $7117: $a2
-	cp		l			; $7118: $bd
-	ld		h, e			; $7119: $63
-	ld		e, d			; $711a: $5a
-	adc		a			; $711b: $8f
-	sub		$35			; $711c: $d6 $35
-	xor		d			; $711e: $aa
-	and		e			; $711f: $a3
-	ld		a, a			; $7120: $7f
-	xor		b			; $7121: $a8
-	rst		$38			; $7122: $ff
-	sub		$35			; $7123: $d6 $35
-	xor		b			; $7125: $a8
-	ccf					; $7126: $3f
-	ld		e, b			; $7127: $58
-	sub		$aa			; $7128: $d6 $aa
-	and		d			; $712a: $a2
-	and		d			; $712b: $a2
-	xor		d			; $712c: $aa
-	ld		e, d			; $712d: $5a
-	and		d			; $712e: $a2
-	ld		(bc), a			; $712f: $02
-	and		l			; $7130: $a5
-	ld		a, a			; $7131: $7f
-	ld		(bc), a			; $7132: $02
-	and		l			; $7133: $a5
-	ld		l, b			; $7134: $68
-	nop					; $7135: $00
-	ldi		a, (hl)			; $7136: $2a
-	ld		d, (hl)			; $7137: $56
-	and		b			; $7138: $a0
+demoScenesMovementData:
+	; %11 - down
+	; %01 - up
+	; %10 - left
+	; %00 - right
+	; %10101010 - left * 4
+	; TODO: break it all down, and per level
+	.db $aa $a2 $96 $8f $5a $8a $aa $aa
+	.db $aa $83 $58 $08 $02 $0d $62 $aa
+	.db $aa $96 $a0 $a0 $2a $09 $d7 $53
+	.db $5f $d5 $aa $82 $96 $a0 $aa $96
+	.db $a2 $bd $63 $5a $8f $d6 $35 $aa
+	.db $a3 $7f $a8 $ff $d6 $35 $a8 $3f
+	.db $58 $d6 $aa $a2 $a2 $aa $5a $a2
+	.db $02 $a5 $7f $02 $a5 $68 $00 $2a
+	.db $56 $a0
 
 data_7139:
 	.db $68 $48 $60 $00

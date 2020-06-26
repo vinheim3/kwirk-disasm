@@ -166,7 +166,7 @@ sound0f:
 	.db $ff
 
 sound0fChannel6:
-	.db $01
+	.db $f0 $01
 	.db $fc
 	.dw soundData_772a
 	ret		nz			; $7f6b: $c0

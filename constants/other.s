@@ -2,6 +2,11 @@
 .define DIFFICULTY_AVERAGE	$01
 .define DIFFICULTY_HARD		$02
 
+.define GAMEMODE_GOING_UP		$00
+.define GAMEMODE_HEADING_OUT	$01
+.define GAMEMODE_VS_MODE		$02
+
+
 .define ROOM_WIDTH			20
 .define ROOM_HEIGHT			18
 

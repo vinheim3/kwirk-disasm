@@ -1,5 +1,5 @@
 loadAllLevelData:
-	ld		a, (wIsScrollingLevel)
+	ld		a, (wGameMode)
 	and		a
 	jr		z, loadRoomSizeForStairsRooms
 
@@ -138,38 +138,37 @@ loadRoomObjectsAndTypes:
 
 
 allRoomDataLoaded:
-	ld		a, (wIsScrollingLevel)		; $09fb: $fa $b8 $c2
-	and		a			; $09fe: $a7
-	jp		z, @getCorrectWallValues		; $09ff: $ca $92 $0a
+	ld		a, (wGameMode)
+	and		a
+	jp		z, @getCorrectWallValues
 
 	; load non-stairs room size data (related to the shape of the path leading out)
-	ld		bc, roomSizeTable		; $0a02: $01 $50 $42
-	call		getAddressOfRoomData			; $0a05: $cd $ce $0a
-	call		storeAddressOfRoomDataInHl			; $0a08: $cd $dc $0a
+	ld		bc, roomSizeTable
+	call		getAddressOfRoomData
+	call		storeAddressOfRoomDataInHl
 
-	ld		a, (hl)			; $0a0b: $7e
-	ld		c, a			; $0a0c: $4f
-	ld		a, (wc2fa)		; $0a0d: $fa $fa $c2
-	cp		$01			; $0a10: $fe $01
-	jr		nz, +			; $0a12: $20 $15
+	ld		a, (hl)
+	ld		c, a
+	ld		a, (wRandomRoomIsFlippedVertically)
+	cp		$01
+	jr		nz, +
 
-	; is top-down
-	ld		a, c			; $0a14: $79
-	and		$0f			; $0a15: $e6 $0f
-	ld		b, a			; $0a17: $47
-	ld		a, $05			; $0a18: $3e $05
-	sub		b			; $0a1a: $90
-	ld		d, a			; room59 - d = 3 (5-2)
-	ld		a, c			; $0a1c: $79
-	swap		a			; $0a1d: $cb $37
-	and		$0f			; $0a1f: $e6 $0f
-	ld		b, a			; $0a21: $47
-	ld		a, $05			; $0a22: $3e $05
-	sub		b			; room59 - a = 5 (5-0)
-	swap		a			; $0a25: $cb $37
-	add		d			; $0a27: $82
-	ld		c, a			; $0a28: $4f
-	; c = $(5-high nybble in room size)(5-low nybble in room size)
+	; if flipped vertically c = ${5-high nybble}{5-low nybble}
+	ld		a, c
+	and		$0f
+	ld		b, a
+	ld		a, $05
+	sub		b
+	ld		d, a
+	ld		a, c
+	swap		a
+	and		$0f
+	ld		b, a
+	ld		a, $05
+	sub		b
+	swap		a
+	add		d
+	ld		c, a
 +
 
 	; below probably has something to do with drawing the path
@@ -225,6 +224,7 @@ allRoomDataLoaded:
 	ld		a, (wRoomObjectTypesAddress)		; $0a73: $fa $0d $cf
 	add		$06			; $0a76: $c6 $06
 	jr		---			; $0a78: $18 $bd
+
 @func_0a7a:
 	ld		a, $c0			; $0a7a: $3e $c0
 	ld		de, $c1b2		; $0a7c: $11 $b2 $c1
@@ -236,10 +236,11 @@ allRoomDataLoaded:
 	ld		(de), a			; $0a86: $12
 	dec		de			; $0a87: $1b
 	ld		(de), a			; $0a88: $12
-	ld		a, (wc2fa)		; $0a89: $fa $fa $c2
+	ld		a, (wRandomRoomIsFlippedVertically)		; $0a89: $fa $fa $c2
 	and		a			; $0a8c: $a7
 	jr		z, @getCorrectWallValues			; $0a8d: $28 $03
 	call		func_0dec			; $0a8f: $cd $ec $0d
+
 
 @getCorrectWallValues:
 	ld		hl, wRoomObjects
@@ -915,6 +916,8 @@ scfIfObjectIsWall:
 ++
 	ret
 
+; Called when random room is flipped vertically, before loading correct wall values
+; maybe adjusts every object vertically
 func_0dec:
 	ld		hl, $c17e		; $0dec: $21 $7e $c1
 	ld		de, $c1e2		; $0def: $11 $e2 $c1

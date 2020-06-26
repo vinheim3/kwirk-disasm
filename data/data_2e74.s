@@ -8,9 +8,11 @@ func_2e4e:
 	ld		a, (hl)			; $2e5a: $7e
 	ld		h, a			; $2e5b: $67
 	ld		l, e			; $2e5c: $6b
-	ld		a, ($c2be)		; $2e5d: $fa $be $c2
+	ld		a, (wIsDiagonalView)		; $2e5d: $fa $be $c2
 	and		a			; $2e60: $a7
 	jr		nz, +			; $2e61: $20 $05
+
+	; every block of $30, 1st is for top-down view, 2nd is for diagonal view
 	ld		a, $18			; $2e63: $3e $18
 	call		addAToHl			; $2e65: $cd $6b $24
 +

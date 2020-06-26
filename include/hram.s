@@ -3,6 +3,8 @@
 .define hNewKeysPressed	$ff8c
 .define hFF8D $ff8d
 .define hFF8E $ff8e
+
+; current address of where we're doing some processing on special objects? from $c2d4
 .define hFF8F $ff8f
 .define hFF90 $ff90
 .define hVBlankHandled	$ff91

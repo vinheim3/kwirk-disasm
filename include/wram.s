@@ -18,10 +18,13 @@ wRoomObjects: ; $c100
 wc268:
 	dsb $b8-$68
 
-wIsScrollingLevel: ; $c2b8
+; $0 for stairs rooms
+; $1 for scrolling level
+; $2 for contest mode?
+wGameMode: ; $c2b8
 	db
 
-wc2b9:
+wNumberOfRandomRoomsForDifficulty: ; $c2b9
 	db
 
 wc2ba:
@@ -31,7 +34,10 @@ wc2bb:
 	db
 
 wc2bc:
-	dsb $f-$c
+	dsb $e-$c
+
+wIsDiagonalView: ; $c2be
+	db
 
 wRoomIndex: ; $c2bf
 	db
@@ -42,10 +48,24 @@ wDifficulty: ; $c2c0
 wNumCharacters: ; $c2d0
 	dsb $fa-$d0
 
-wc2fa: ; $c2fa
-	dsb $375-$2fa
+; $c2d1
+; 3 when loading a character object
+; $c2d4
+; address of special objects? (characters and stairs)
 
-; $c311 - start of data that stores index of random rooms?
+; Set to 0 except when:
+; Set to 1 possibly by getNextRandomNumber based on rng
+; I'm guessing this flips rooms vertically?
+wRandomRoomIsFlippedVertically: ; $c2fa
+	dsb $311-$2fa
+
+; start of data that stores index of random rooms?
+; TODO: size 30
+wListOfRandomLevels: ; $c311
+	dsb $74-$11
+
+wCurrentLevelIdxInListOfRandomLevels: ; $c374
+	db
 
 wc375:
 	db
@@ -60,7 +80,13 @@ wc37d:
 	db
 
 wc37e:
-	dsb $f00-$37e
+	dsb $edc-$37e
+
+wIdxOfDemoSceneMovementSteps: ; $cedc
+	dw
+
+wCurrentDemoSceneRoomIdx: ; $cede
+	dsb $f00-$ede
 
 wcf00:
 	db
@@ -177,7 +203,18 @@ wMenuOptionSelected: ; $cf19
 wMeOamTempStorage: ; $cf24
 	db
 wStairsOamTempStorage: ; $cf25
-	dsb $39-$25
+	dsb 3
+
+wRng1: ; $cf28
+	db
+wRng2: ; $cf29
+	db
+wRng3: ; $cf2a
+	db
+wRng4: ; $cf2b
+	dsb $39-$2b
+
+; $c377 - seed?
 
 wcf39:
 	db
@@ -201,7 +238,7 @@ wcf41:
 wcf42:
 	db
 
-wcf43:
+wIsDemoScenes:
 	dsb 3
 
 wcf46:
