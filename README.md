@@ -25,7 +25,49 @@ are the 3-legged spinners)
 leg, ($01)you, wall, wall
 
 For levels 31+, the room size table is 1 byte each and is used to determine how
-the exit path looks like (WIP)
+the exit path looks like. 1st nybble is idx of exit path leading left, 2nd nybble
+is the right path leading into the puzzle
+```
+; Left+right idx 0 ($74 $c0, $e2 $30)
+;   0123456789abcde
+; 6   0xxx        xxx0
+; 7   0x00        00x0
+; 8 xxxx00        00xxxx
+; 9   0000        0000
+
+; Left+right idx 1 ($7c $00, $e3 $00)
+;   0123456789abcde
+; 7   0xxx        xxx0
+; 8 xxxx00        00xxxx
+; 9   0000        0000
+; a   0000        0000
+
+; Left+right idx 2 ($f0 $00, $f0 $00)
+;   0123456789abcde
+; 8 xxxxxx        xxxxxx
+; 9   0000        0000
+; a   0000        0000
+; b   0000        0000
+
+; Left+right idx 3 ($c7 $00, $3e $00)
+;   0123456789abcde
+; 8 xxxx00        00xxxx
+; 9   0xxx        xxx0
+; a   0000        0000
+; b   0000        0000
+
+; Left+right idx 4 ($c4 $70, $32 $e0)
+; 8 xxxx00        00xxxx
+; 9   0x00        00x0
+; a   0xxx        xxx0
+; b   0000        0000
+
+; Left+right idx 5 ($c4 $47, $32 $2e)
+; 8 xxxx00        00xxxx
+; 9   0x00        00x0
+; a   0x00        00x0
+; b   0xxx        xxx0
+```
 
 ## Object types
 ```

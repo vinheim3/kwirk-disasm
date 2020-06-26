@@ -113,10 +113,9 @@ wcf05:
     wCursorOriginY: ; $cf08
     	db
 
-    ; $cf09 - current sprite being processed?
+    ; address in wRoomObjects when processing room objects
     wcf09:
     	db
-
     wcf0a:
     	db
 
@@ -147,7 +146,10 @@ wcf05:
 		db
 
 	wcf13:
-		dsb 4
+		dsb 2
+
+	wLevelIdxWithinDifficulty: ; $cf15
+		dsb 2
 
 	; $cf15 - bcd form of current level cleared?
 
@@ -184,7 +186,7 @@ wcf05:
 	wCurrentPushableBlockDrawLocation: ; $cf13
 		dw
 
-	; cf15 - something to do if it's bird's eye view or diagonal view?
+	; room level within difficulty
 	wcf15:
 		dsb 2
 

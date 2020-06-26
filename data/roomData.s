@@ -1063,7 +1063,12 @@ roomSizeData_136:
 roomSizeData_118:
 	.db $30
 roomObjectPositionData_033:
-	.db $e7 $81 $24 $81 $e7 $ff
+	.db %11100111
+	.db %10000001
+	.db %00100100
+	.db %10000001
+	.db %11100111
+	.db %11111111
 roomObjectPositionData_052:
 	.db $83 $ab $83 $a3 $8b $38
 roomObjectPositionData_066:

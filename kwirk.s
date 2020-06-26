@@ -1748,6 +1748,7 @@ displayInGameMenu:
 	ld		($c08c), a		; $14b3: $ea $8c $c0
 	ld		($c090), a		; $14b6: $ea $90 $c0
 	ld		($c094), a		; $14b9: $ea $94 $c0
+
 	ld		a, (meOam)		; $14bc: $fa $9e $c0
 	ld		(wMeOamTempStorage), a		; $14bf: $ea $24 $cf
 	ld		a, (stairsOam)		; $14c2: $fa $9a $c0
@@ -1755,6 +1756,7 @@ displayInGameMenu:
 	ld		a, $ff			; $14c8: $3e $ff
 	ld		(stairsOam), a		; $14ca: $ea $9a $c0
 	ld		(meOam), a		; $14cd: $ea $9e $c0
+
 	ld		a, $a5			; $14d0: $3e $a5
 	ldh		(R_WX), a		; $14d2: $e0 $4b
 	ld		a, $10			; $14d4: $3e $10
@@ -2049,7 +2051,7 @@ func_16d3:
 	ld		a, 10			; $170c: $3e $0a
 +
 	call		get2DigitsToDrawFromNonBCD_A			; $170e: $cd $12 $21
-	ld		($cf15), a		; $1711: $ea $15 $cf
+	ld		(wLevelIdxWithinDifficulty), a		; $1711: $ea $15 $cf
 	ld		hl, $98af		; $1714: $21 $af $98
 	call		draw2DigitsAtHl			; $1717: $cd $5d $20
 
@@ -2080,9 +2082,11 @@ func_16d3:
 	and		a			; $1759: $a7
 	jr		z, -			; $175a: $28 $e2
 	call		func_01f9			; $175c: $cd $f9 $01
-	ld		a, ($cf15)		; $175f: $fa $15 $cf
+	ld		a, (wLevelIdxWithinDifficulty)		; $175f: $fa $15 $cf
 	cp		$10			; $1762: $fe $10
 	jr		nz, +			; $1764: $20 $0d
+
+	; cleared last level of level set
 	xor		a			; $1766: $af
 	ld		(wcf40), a		; $1767: $ea $40 $cf
 	call		clear1st100bytesOfWram			; $176a: $cd $81 $1f
@@ -2651,7 +2655,7 @@ func_1aff:
 	ld		a, (hl)			; $1b2b: $7e
 	call		func_2731			; $1b2c: $cd $31 $27
 	push		af			; $1b2f: $f5
-	call		func_1ba3			; $1b30: $cd $a3 $1b
+	call		getAddressOfRoomObjectsTileInVram			; $1b30: $cd $a3 $1b
 	call		waitUntilHBlankJustStarted			; $1b33: $cd $74 $1f
 	pop		af			; $1b36: $f1
 	ld		(de), a			; $1b37: $12
@@ -2667,7 +2671,7 @@ func_1aff:
 	ld		a, (hl)			; $1b44: $7e
 	call		func_2731			; $1b45: $cd $31 $27
 	push		af			; $1b48: $f5
-	call		func_1ba3			; $1b49: $cd $a3 $1b
+	call		getAddressOfRoomObjectsTileInVram			; $1b49: $cd $a3 $1b
 	call		waitUntilHBlankJustStarted			; $1b4c: $cd $74 $1f
 	pop		af			; $1b4f: $f1
 	ld		(de), a			; $1b50: $12
@@ -2708,15 +2712,18 @@ func_1aff:
 
 ; @param	hl		eg wRoomObjects
 ; @param	bc		eg size of data
+; copies roomobjects to bg_map1 it seems
 func_1b8d:
 	push		bc			; $1b8d: $c5
 	ld		a, (hl)			; $1b8e: $7e
+
 	call		func_2731			; $1b8f: $cd $31 $27
 	push		af			; $1b92: $f5
-	call		func_1ba3			; $1b93: $cd $a3 $1b
+	call		getAddressOfRoomObjectsTileInVram			; $1b93: $cd $a3 $1b
 	call		waitUntilHBlankJustStarted			; $1b96: $cd $74 $1f
 	pop		af			; $1b99: $f1
 	ld		(de), a			; $1b9a: $12
+
 	inc		hl			; $1b9b: $23
 	pop		bc			; $1b9c: $c1
 	dec		bc			; $1b9d: $0b
@@ -2725,30 +2732,38 @@ func_1b8d:
 	jr		nz, func_1b8d			; $1ba0: $20 $eb
 	ret					; $1ba2: $c9
 
-func_1ba3:
-	push		hl			; $1ba3: $e5
-	push		bc			; $1ba4: $c5
-	ld		a, h			; $1ba5: $7c
-	sub		$c1			; $1ba6: $d6 $c1
-	ld		h, a			; $1ba8: $67
-	ld		a, $14			; $1ba9: $3e $14
-	call		hlDivModA			; $1bab: $cd $2b $1f
-	ld		b, $05			; $1bae: $06 $05
+;;
+; @param		hl		addr of object ($c100-$c267)
+; @param[out]	de		addr of object in BG_MAP1
+getAddressOfRoomObjectsTileInVram:
+	push		hl
+	push		bc
+	ld		a, h
+	sub		>wRoomObjects
+	ld		h, a
+	ld		a, 20
+	call		hlDivModA
+
+	; a is row idx, l is column idx
+	ld		b, $05
 -
-	sla		l			; $1bb0: $cb $25
-	rl		h			; $1bb2: $cb $14
-	dec		b			; $1bb4: $05
-	jr		nz, -			; $1bb5: $20 $f9
-	ld		e, a			; $1bb7: $5f
-	ld		d, $00			; $1bb8: $16 $00
-	add		hl, de			; $1bba: $19
-	ld		de, $9800		; $1bbb: $11 $00 $98
-	add		hl, de			; $1bbe: $19
-	ld		d, h			; $1bbf: $54
-	ld		e, l			; $1bc0: $5d
-	pop		bc			; $1bc1: $c1
-	pop		hl			; $1bc2: $e1
-	ret					; $1bc3: $c9
+	sla		l
+	rl		h
+	dec		b
+	jr		nz, -
+	; hl = hl*32
+
+	ld		e, a
+	ld		d, $00
+	add		hl, de
+	ld		de, BG_MAP1
+	add		hl, de
+	ld		d, h
+	ld		e, l
+	; de is addr of oam
+	pop		bc
+	pop		hl
+	ret
 
 loadInGameMenu:
 	ld		hl, BG_MAP2
@@ -4671,6 +4686,8 @@ func_26e2:
 +
 	ret					; $2730: $c9
 
+; a = object value in wRoomObjects
+; hl = addr in wroomobjects
 func_2731:
 	push		bc			; $2731: $c5
 	push		de			; $2732: $d5
@@ -4679,21 +4696,31 @@ func_2731:
 	and		$f0			; $2735: $e6 $f0
 	cp		$10			; $2737: $fe $10
 	jr		nz, +			; $2739: $20 $03
+
+	; if stairs, use 0 instead of its object value
 	pop		af			; $273b: $f1
 	xor		a			; $273c: $af
 	push		af			; $273d: $f5
 +
+
+	; wRoomObjects addr in $cf09/0a
 	ld		a, l			; $273e: $7d
 	ld		($cf09), a		; $273f: $ea $09 $cf
 	ld		a, h			; $2742: $7c
 	ld		($cf0a), a		; $2743: $ea $0a $cf
 	pop		af			; $2746: $f1
-	cp		$e0			; $2747: $fe $e0
+
+	; a = original value or 0 for stairs
+	cp		OBJ_PIT			; $2747: $fe $e0
 	jp		z, func_27c4		; $2749: $ca $c4 $27
+
+	; non-pits, put object val in $cf07
 	ld		(wCursorOriginX), a		; $274c: $ea $07 $cf
 	and		$f0			; $274f: $e6 $f0
-	cp		$c0			; $2751: $fe $c0
+	cp		OBJ_CHARACTER			; $2751: $fe $c0
 	jr		nz, +			; $2753: $20 $04
+
+	; 0 into $cf07 if playable character
 	xor		a			; $2755: $af
 	ld		(wCursorOriginX), a		; $2756: $ea $07 $cf
 +
@@ -4706,12 +4733,16 @@ func_2731:
 	sla		e			; $2766: $cb $23
 	rl		d			; $2768: $cb $12
 	add		hl, de			; $276a: $19
+	; hl = data_3edf + 2*high nybble of $cf07
+
 	ldi		a, (hl)			; $276b: $2a
 	ld		(wCursorOriginY), a		; $276c: $ea $08 $cf
 	ld		a, (hl)			; $276f: $7e
 	ld		h, a			; $2770: $67
 	ld		a, (wCursorOriginY)		; $2771: $fa $08 $cf
 	ld		l, a			; $2774: $6f
+	; hl now at a table with some more data in
+
 	ld		a, (wCursorOriginX)		; $2775: $fa $07 $cf
 	and		$0f			; $2778: $e6 $0f
 	ld		e, a			; $277a: $5f
@@ -4721,20 +4752,25 @@ func_2731:
 	ld		a, (wIsDiagonalView)		; $277f: $fa $be $c2
 	and		a			; $2782: $a7
 	jr		z, func_27b7			; $2783: $28 $32
+
+	; is diagonal view, get value back from wRoomObjects
 	ld		a, ($cf09)		; $2785: $fa $09 $cf
 	ld		l, a			; $2788: $6f
 	ld		a, ($cf0a)		; $2789: $fa $0a $cf
 	ld		h, a			; $278c: $67
 	ld		a, (hl)			; $278d: $7e
+
 	and		$f0			; $278e: $e6 $f0
-	cp		$10			; $2790: $fe $10
+	cp		OBJ_STAIRS			; $2790: $fe $10
 	jr		z, +			; $2792: $28 $08
-	cp		$c0			; $2794: $fe $c0
+	cp		OBJ_CHARACTER			; $2794: $fe $c0
 	jr		z, +			; $2796: $28 $04
+	; non-stairs/character
+
 	cp		$00			; $2798: $fe $00
 	jr		nz, func_27b7			; $279a: $20 $1b
 +
-	ld		de, -$14		; $279c: $11 $ec $ff
+	ld		de, -20		; $279c: $11 $ec $ff
 	add		hl, de			; $279f: $19
 	ld		a, (hl)			; $27a0: $7e
 	and		$f0			; $27a1: $e6 $f0
@@ -4764,12 +4800,16 @@ func_27c0:
 	pop		de			; $27c1: $d1
 	pop		bc			; $27c2: $c1
 	ret					; $27c3: $c9
+
 func_27c4:
-	ld		de, -$14		; $27c4: $11 $ec $ff
+	; processing pit
+	ld		de, -20		; $27c4: $11 $ec $ff
 	add		hl, de			; $27c7: $19
 	ld		a, (hl)			; $27c8: $7e
+
+	; interrogate high nybble of object val above
 	and		$f0			; $27c9: $e6 $f0
-	cp		$e0			; $27cb: $fe $e0
+	cp		OBJ_PIT			; $27cb: $fe $e0
 	jr		z, func_27d9			; $27cd: $28 $0a
 	cp		$50			; $27cf: $fe $50
 	jr		z, func_27d9			; $27d1: $28 $06
@@ -4777,6 +4817,7 @@ func_27c4:
 	jr		z, func_27d9			; $27d5: $28 $02
 	jr		func_27de			; $27d7: $18 $05
 func_27d9:
+	; $fd
 	ld		a, (data_3f60)		; $27d9: $fa $60 $3f
 	jr		func_27c0			; $27dc: $18 $e2
 func_27de:
@@ -5361,64 +5402,64 @@ data_2b35:
 	add		b			; $2b44: $80
 
 pollInput:
-	ld		a, $20			; $2b45: $3e $20
-	ldh		(R_P1), a		; $2b47: $e0 $00
-	ldh		a, (R_P1)		; $2b49: $f0 $00
-	ldh		a, (R_P1)		; $2b4b: $f0 $00
-	ldh		a, (R_P1)		; $2b4d: $f0 $00
-	ldh		a, (R_P1)		; $2b4f: $f0 $00
-	ldh		a, (R_P1)		; $2b51: $f0 $00
-	ldh		a, (R_P1)		; $2b53: $f0 $00
-	cpl					; $2b55: $2f
-	and		$0f			; $2b56: $e6 $0f
-	swap		a			; $2b58: $cb $37
-	ld		b, a			; $2b5a: $47
-	ld		a, $10			; $2b5b: $3e $10
-	ldh		(R_P1), a		; $2b5d: $e0 $00
-	ldh		a, (R_P1)		; $2b5f: $f0 $00
-	ldh		a, (R_P1)		; $2b61: $f0 $00
-	ldh		a, (R_P1)		; $2b63: $f0 $00
-	ldh		a, (R_P1)		; $2b65: $f0 $00
-	ldh		a, (R_P1)		; $2b67: $f0 $00
-	ldh		a, (R_P1)		; $2b69: $f0 $00
-	ldh		a, (R_P1)		; $2b6b: $f0 $00
-	ldh		a, (R_P1)		; $2b6d: $f0 $00
-	ldh		a, (R_P1)		; $2b6f: $f0 $00
-	ldh		a, (R_P1)		; $2b71: $f0 $00
-	cpl					; $2b73: $2f
-	and		$0f			; $2b74: $e6 $0f
-	or		b			; $2b76: $b0
-	ld		c, a			; $2b77: $4f
-	ldh		a, (<hKeysPressed)		; $2b78: $f0 $8b
-	xor		c			; $2b7a: $a9
-	and		c			; $2b7b: $a1
-	ldh		(<hNewKeysPressed), a		; $2b7c: $e0 $8c
-	ld		a, c			; $2b7e: $79
-	ldh		(<hKeysPressed), a		; $2b7f: $e0 $8b
-	ld		a, $30			; $2b81: $3e $30
-	ldh		(R_P1), a		; $2b83: $e0 $00
-	ret					; $2b85: $c9
+	ld		a, $20
+	ldh		(R_P1), a
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	cpl
+	and		$0f
+	swap		a
+	ld		b, a
+	ld		a, $10
+	ldh		(R_P1), a
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	ldh		a, (R_P1)
+	cpl
+	and		$0f
+	or		b
+	ld		c, a
+	ldh		a, (<hKeysPressed)
+	xor		c
+	and		c
+	ldh		(<hNewKeysPressed), a
+	ld		a, c
+	ldh		(<hKeysPressed), a
+	ld		a, $30
+	ldh		(R_P1), a
+	ret
 
 copyOamDmaFunction:
-	ld		c, <hOamFunc			; $2b86: $0e $80
-	ld		b, _oamDmaFunctionEnd-_oamDmaFunction			; $2b88: $06 $0a
-	ld		hl, _oamDmaFunction		; $2b8a: $21 $94 $2b
+	ld		c, <hOamFunc
+	ld		b, _oamDmaFunctionEnd-_oamDmaFunction
+	ld		hl, _oamDmaFunction
 -
-	ldi		a, (hl)			; $2b8d: $2a
-	ld		($ff00+c), a		; $2b8e: $e2
-	inc		c			; $2b8f: $0c
-	dec		b			; $2b90: $05
-	jr		nz, -			; $2b91: $20 $fa
-	ret					; $2b93: $c9
+	ldi		a, (hl)
+	ld		($ff00+c), a
+	inc		c
+	dec		b
+	jr		nz, -
+	ret
 
 _oamDmaFunction:
-	ld		a, >wOam			; $2b94: $3e $c0
-	ldh		(R_DMA), a		; $2b96: $e0 $46
-	ld		a, $28			; $2b98: $3e $28
+	ld		a, >wOam
+	ldh		(R_DMA), a
+	ld		a, $28
 -
-	dec		a			; $2b9a: $3d
-	jr		nz, -			; $2b9b: $20 $fd
-	ret					; $2b9d: $c9
+	dec		a
+	jr		nz, -
+	ret
 _oamDmaFunctionEnd:
 
 
@@ -5654,15 +5695,6 @@ func_2c8e:
 ; @param	de		typically $40, 1 case $20, 1 case $720 - number of bytes to copy?
 ; @param	bc		either $0001-$0004 or $0104
 loadCursorData:
-	; $cf06 = $3c
-	; $cf07 = l
-	; $cf08 = h
-	; $cf0f = a
-	; $cf11 = b
-	; $cf12 = c
-	; $cf17 = e
-	; $cf18 = d
-	; $cf19 = 0
 	ld		($cf0f), a		; $2c9b: $ea $0f $cf
 	ld		a, b			; $2c9e: $78
 	ld		(wExtraMenuColumns), a		; $2c9f: $ea $11 $cf
@@ -6070,7 +6102,7 @@ func_31e7:
 	call		getScrollingLevel1stRoomIdxAndRangeOfRoomsBasedOnDifficulty			; $3201: $cd $c9 $3e
 	ld		a, b			; $3204: $78
 	call		hlDivModA			; $3205: $cd $2b $1f
-	add		$1e			; $3208: $c6 $1e
+	add		30			; $3208: $c6 $1e
 	call		func_323c			; $320a: $cd $3c $32
 	cp		$ab			; $320d: $fe $ab
 	jr		z, -			; $320f: $28 $ea
@@ -6084,6 +6116,8 @@ func_31e7:
 	ld		a, (wGameMode)		; $321a: $fa $b8 $c2
 	cp		GAMEMODE_HEADING_OUT			; $321d: $fe $01
 	jr		z, +			; $321f: $28 $08
+
+	; contest
 	ld		a, (wc2ba)		; $3221: $fa $ba $c2
 	ld		c, a			; $3224: $4f
 	sub		b			; $3225: $90
@@ -6181,16 +6215,16 @@ func_3283:
 +
 	ret					; $329f: $c9
 
-func_32a0:
-	push		bc			; $32a0: $c5
-	ld		bc, $0064		; $32a1: $01 $64 $00
+doALoop64Times:
+	push		bc
+	ld		bc, $0064
 -
-	dec		bc			; $32a4: $0b
-	ld		a, b			; $32a5: $78
-	or		c			; $32a6: $b1
-	jr		nz, -			; $32a7: $20 $fb
-	pop		bc			; $32a9: $c1
-	ret					; $32aa: $c9
+	dec		bc
+	ld		a, b
+	or		c
+	jr		nz, -
+	pop		bc
+	ret
 
 
 serialInterrupt:
@@ -6630,7 +6664,7 @@ func_35c7:
 	jp		z, func_1083		; $35d4: $ca $83 $10
 	ld		(wc375), a		; $35d7: $ea $75 $c3
 	call		func_3283			; $35da: $cd $83 $32
-	call		func_32a0			; $35dd: $cd $a0 $32
+	call		doALoop64Times			; $35dd: $cd $a0 $32
 	xor		a			; $35e0: $af
 	jp		func_107e			; $35e1: $c3 $7e $10
 
@@ -6654,7 +6688,7 @@ func_3600:
 	jp		z, func_1083		; $3604: $ca $83 $10
 	ld		a, (wc377)		; $3607: $fa $77 $c3
 	ld		(wc375), a		; $360a: $ea $75 $c3
-	call		func_32a0			; $360d: $cd $a0 $32
+	call		doALoop64Times			; $360d: $cd $a0 $32
 	call		func_3283			; $3610: $cd $83 $32
 	xor		a			; $3613: $af
 	jp		func_107e			; $3614: $c3 $7e $10
@@ -6919,13 +6953,14 @@ func_37ff:
 func_3804:
 	ld		a, (wIsDemoScenes)		; $3804: $fa $43 $cf
 	and		a			; $3807: $a7
-	jr		nz, func_3816			; $3808: $20 $0c
+	jr		nz, @demoScenes			; $3808: $20 $0c
 	call		pollInput			; $380a: $cd $45 $2b
 	ldh		a, (<hNewKeysPressed)		; $380d: $f0 $8c
 	and		BTN_A|BTN_START			; $380f: $e6 $09
 	jp		nz, func_39bd		; $3811: $c2 $bd $39
 	jr		func_3804			; $3814: $18 $ee
-func_3816:
+
+@demoScenes:
 	call		func_365f			; $3816: $cd $5f $36
 	jp		func_018d			; $3819: $c3 $8d $01
 
@@ -7746,42 +7781,32 @@ getScrollingLevel1stRoomIdxAndRangeOfRoomsBasedOnDifficulty:
 
 
 data_3edf:
-.db $ff
-	ld		a, $01			; $3ee0: $3e $01
-	ccf					; $3ee2: $3f
-	rst		$38			; $3ee3: $ff
-	rst		$38			; $3ee4: $ff
-	rst		$38			; $3ee5: $ff
-	rst		$38			; $3ee6: $ff
-	dec		b			; $3ee7: $05
-	ccf					; $3ee8: $3f
-	dec		b			; $3ee9: $05
-	ccf					; $3eea: $3f
-	rst		$38			; $3eeb: $ff
-	rst		$38			; $3eec: $ff
-	rst		$38			; $3eed: $ff
-	rst		$38			; $3eee: $ff
-	dec		d			; $3eef: $15
-	ccf					; $3ef0: $3f
-	dec		d			; $3ef1: $15
-	ccf					; $3ef2: $3f
-	add		hl, de			; $3ef3: $19
-	ccf					; $3ef4: $3f
-	rst		$38			; $3ef5: $ff
-	rst		$38			; $3ef6: $ff
-	jr		z, $3f			; $3ef7: $28 $3f
-	rst		$38			; $3ef9: $ff
-	rst		$38			; $3efa: $ff
-	ld		d, h			; $3efb: $54
-	ccf					; $3efc: $3f
-	ld		b, h			; $3efd: $44
-	ccf					; $3efe: $3f
-	rst		$38			; $3eff: $ff
-.db $ec
+	.dw data_3eff
+	.dw data_3f01
+	.dw $ffff
+	.dw $ffff
+	.dw data_3f05
+	.dw data_3f05
+	.dw $ffff
+    .dw $ffff
+
+	.dw data_3f15
+	.dw data_3f15
+	.dw data_3f19
+	.dw $ffff
+	.dw data_3f28
+	.dw $ffff
+	.dw data_3f54
+	.dw data_3f44
+
+data_3eff:
+	.db $ff $ec
 
 data_3f01:
 	jp		c, $d9ff		; $3f01: $da $ff $d9
 .db $db
+
+data_3f05:
 	ret		nz			; $3f05: $c0
 	pop		bc			; $3f06: $c1
 	jp		$c2c5			; $3f07: $c3 $c5 $c2
@@ -7790,10 +7815,14 @@ data_3f01:
 	set		1, b			; $3f10: $cb $c8
 	adc		$cc			; $3f12: $ce $cc
 	cp		a			; $3f14: $bf
+
+data_3f15:
 	or		b			; $3f15: $b0
 	or		h			; $3f16: $b4
 	or		c			; $3f17: $b1
 	or		l			; $3f18: $b5
+
+data_3f19:
 	or		d			; $3f19: $b2
 	cp		c			; $3f1a: $b9
 	or		e			; $3f1b: $b3
@@ -7841,6 +7870,8 @@ data_3f38:
 	ld		a, l			; $3f41: $7d
 	ld		a, (hl)			; $3f42: $7e
 	ld		a, a			; $3f43: $7f
+
+data_3f44:
 	ret		nc			; $3f44: $d0
 	pop		de			; $3f45: $d1
 .db $d3

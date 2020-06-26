@@ -13,6 +13,11 @@
 
 .define OBJ_STAIRS			$10
 
+; pushable block vals $40 - $4f
+; spinner vals $a0 - $ae
+; brick vals $f0 - $ff
+
+.define OBJ_CHARACTER		$c0
 .define OBJ_KWIRK			$c0
 .define OBJ_EDDIE_EGGPLANT	$c1
 .define OBJ_PEPPER_PETE		$c2

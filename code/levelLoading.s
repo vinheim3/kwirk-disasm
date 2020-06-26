@@ -171,67 +171,83 @@ allRoomDataLoaded:
 	ld		c, a
 +
 
-	; below probably has something to do with drawing the path
-	ld		a, c			; $0a29: $79
-	push		af			; $0a2a: $f5
-	and		$0f			; $0a2b: $e6 $0f
-	ld		(wRoomObjectTypesAddress), a		; $0a2d: $ea $0d $cf
-	pop		af			; $0a30: $f1
-	and		$f0			; $0a31: $e6 $f0
-	swap		a			; $0a33: $cb $37
-	ld		c, $02			; $0a35: $0e $02
----
-	push		af			; $0a37: $f5
-	ld		hl, data_0aaa		; $0a38: $21 $aa $0a
-	call		addAToHl			; $0a3b: $cd $6b $24
-	ld		e, (hl)			; $0a3e: $5e
-	ld		d, $c1			; $0a3f: $16 $c1
-	ld		hl, data_0ab6		; $0a41: $21 $b6 $0a
-	pop		af			; $0a44: $f1
-	add		a			; $0a45: $87
-	call		addAToHl			; $0a46: $cd $6b $24
-	ld		b, (hl)			; $0a49: $46
-	inc		hl			; $0a4a: $23
-	ld		a, (hl)			; $0a4b: $7e
-	ld		($cf0e), a		; $0a4c: $ea $0e $cf
-	push		bc			; $0a4f: $c5
-	ld		c, $02			; $0a50: $0e $02
---
-	ld		hl, $0408		; $0a52: $21 $08 $04
--
-	sla		b			; $0a55: $cb $20
-	jr		nc, +			; $0a57: $30 $02
-	xor		a			; $0a59: $af
-	ld		(de), a			; $0a5a: $12
-+
-	inc		de			; $0a5b: $13
-	dec		h			; $0a5c: $25
-	jr		nz, +			; $0a5d: $20 $06
-	ld		a, $10			; $0a5f: $3e $10
-	add		e			; $0a61: $83
-	ld		e, a			; $0a62: $5f
-	ld		h, $04			; $0a63: $26 $04
-+
-	dec		l			; $0a65: $2d
-	jr		nz, -			; $0a66: $20 $ed
-	ld		a, (wRoomObjectTypesAddress+1)		; $0a68: $fa $0e $cf
-	ld		b, a			; $0a6b: $47
-	dec		c			; $0a6c: $0d
-	jr		nz, --			; $0a6d: $20 $e3
-	pop		bc			; $0a6f: $c1
-	dec		c			; $0a70: $0d
-	jr		z, @func_0a7a			; $0a71: $28 $07
-	ld		a, (wRoomObjectTypesAddress)		; $0a73: $fa $0d $cf
-	add		$06			; $0a76: $c6 $06
-	jr		---			; $0a78: $18 $bd
+	; below draws the paths on each side of the room
+	ld		a, c
+	push		af
+	and		$0f
 
-@func_0a7a:
-	ld		a, $c0			; $0a7a: $3e $c0
+	; store lower nybble of room size in cf0d
+	; it will be read back to process the right side of the room
+	ld		($cf0d), a
+	pop		af
+	and		$f0
+	swap		a
+
+; Outer loop processes twice, once for each side of the room
+	ld		c, $02
+---
+	; with higher nybble, get a byte and a word from the 2 tables
+	; store byte in e, and 2 bytes in b, then cf0e
+	push		af
+	ld		hl, outerCustomPathStartingCoordinates
+	call		addAToHl
+	ld		e, (hl)
+	ld		d, >wRoomObjects
+	ld		hl, outerCustomPathSpacesData
+	pop		af
+	add		a
+	call		addAToHl
+	ld		b, (hl)
+	inc		hl
+	ld		a, (hl)
+	ld		($cf0e), a
+
+; Inner loop processes a byte each from the bottom table
+; Each byte's nybble represents 4 tiles in a row for 4 rows of data
+; Each bit set in these nybbles is a floor space
+	push		bc
+	ld		c, $02
+--
+	ld		hl, $0408
+-
+	sla		b
+	jr		nc, +
+	xor		a
+	ld		(de), a
++
+	inc		de
+	dec		h
+	jr		nz, +
+	ld		a, $10
+	add		e
+	ld		e, a
+	ld		h, $04
++
+	dec		l
+	jr		nz, -
+	ld		a, ($cf0e)
+	ld		b, a
+	dec		c
+	jr		nz, --
+	pop		bc
+
+	dec		c
+	jr		z, @doneWithScrollingPaths
+	ld		a, ($cf0d)
+	add		$06
+	jr		---
+
+@doneWithScrollingPaths:
+	; extend the outer paths
+	; kwirk, then empty space on the right
+	ld		a, OBJ_KWIRK			; $0a7a: $3e $c0
 	ld		de, $c1b2		; $0a7c: $11 $b2 $c1
 	ld		(de), a			; $0a7f: $12
 	xor		a			; $0a80: $af
 	inc		de			; $0a81: $13
 	ld		(de), a			; $0a82: $12
+
+	; empty spaces to the left
 	ld		de, $c1a1		; $0a83: $11 $a1 $c1
 	ld		(de), a			; $0a86: $12
 	dec		de			; $0a87: $1b
@@ -259,38 +275,23 @@ allRoomDataLoaded:
 	jr		nz, -
 	ret
 
-data_0aaa:
-	ld		a, d			; $0aaa: $7a
-	adc		(hl)			; $0aab: $8e
-	and		d			; $0aac: $a2
-	and		d			; $0aad: $a2
-	and		d			; $0aae: $a2
-	and		d			; $0aaf: $a2
-	add		(hl)			; $0ab0: $86
-	sbc		d			; $0ab1: $9a
-	xor		(hl)			; $0ab2: $ae
-	xor		(hl)			; $0ab3: $ae
-	xor		(hl)			; $0ab4: $ae
-	xor		(hl)			; $0ab5: $ae
+; regular path is 8 tiles down
+outerCustomPathStartingCoordinates:
+	; top-left corner of path to draw (left side)
+	.db 6*20+2  7*20+2  8*20+2  8*20+2  8*20+2  8*20+2
+	; top-left corner of path to draw (right side)
+	.db 6*20+$e 7*20+$e 8*20+$e 8*20+$e 8*20+$e 8*20+$e
 
-data_0ab6:
-	ld		(hl), h			; $0ab6: $74
-	ret		nz			; $0ab7: $c0
-	ld		a, h			; $0ab8: $7c
-	nop					; $0ab9: $00
-	ldh		a, (R_P1)		; $0aba: $f0 $00
-	rst		$0			; $0abc: $c7
-	nop					; $0abd: $00
-	call		nz, $c470		; $0abe: $c4 $70 $c4
-	ld		b, a			; $0ac1: $47
-.db $e2
-	jr		nc, -$1d			; $0ac3: $30 $e3
-	nop					; $0ac5: $00
-	ldh		a, (R_P1)		; $0ac6: $f0 $00
-	ld		a, $00			; $0ac8: $3e $00
-	ldd		(hl), a			; $0aca: $32
-	ldh		($32), a		; $0acb: $e0 $32
-.db $2e
+outerCustomPathSpacesData:
+	; left paths
+	.db $74 $c0 $7c $00
+	.db $f0 $00 $c7 $00
+	.db $c4 $70 $c4 $47
+
+	; right paths
+	.db $e2 $30 $e3 $00
+	.db $f0 $00 $3e $00
+	.db $32 $e0 $32 $2e
 
 ;;
 ; The following 2 called after each other
@@ -344,22 +345,35 @@ processBitReadFromObjectPositionsData:
 	ret					; $0b01: $c9
 
 ;;
-; @param 	a		$00 if no bit set, but wall already in place
-;					$ff if no bit set and not wall
+; stores $00 in wRoomObjects if wall in place
+; @param 	a		$00 if no bit set and unchanged by another tile
+;					$ff if no bit set and changed by another tile
+;					byte for current object read if bit set
 func_0b02:
 	push		af			; $0b02: $f5
 	ld		a, (wRoomDataAddress)		; $0b03: $fa $0f $cf
 	ld		l, a			; $0b06: $6f
 	ld		a, (wRoomDataAddress+1)		; $0b07: $fa $10 $cf
 	ld		h, a			; $0b0a: $67
+
 	pop		af			; $0b0b: $f1
+	; no bit set and not the original $f0 (eg extra tile from a spinner)
+	; dont do anything
 	cp		$ff			; $0b0c: $fe $ff
 	jr		z, func_0b20			; $0b0e: $28 $10
+
+	; bit set or untouched, store $00 if untouched (floor), or another byte
 	cp		$e0			; $0b10: $fe $e0
 	jr		nz, func_0b1f			; $0b12: $20 $0b
+
+	; pit
 	ld		a, (hl)			; $0b14: $7e
 	cp		$f0			; $0b15: $fe $f0
+	; pit and address not changed from a spinner on top of it
+	; keep it as $e0
 	jr		z, func_0b1d			; $0b17: $28 $04
+
+	; TODO:
 	add		$10			; $0b19: $c6 $10
 	jr		func_0b1f			; $0b1b: $18 $02
 func_0b1d:
@@ -372,6 +386,7 @@ func_0b20:
 	ld		(wRoomDataAddress), a		; $0b22: $ea $0f $cf
 	ld		a, h			; $0b25: $7c
 	ld		(wRoomDataAddress+1), a		; $0b26: $ea $10 $cf
+
 	xor		a			; $0b29: $af
 	ld		($cf15), a		; $0b2a: $ea $15 $cf
 	ret					; $0b2d: $c9
